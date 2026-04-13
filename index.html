@@ -44,6 +44,16 @@
             margin-bottom: 8px;
             font-size: 1.1rem;
         }
+        .footer {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            text-align: center;
+            color: #777;
+        }
+        .footer a {
+            color: #0056b3;
+            text-decoration: none;
+        }
         .loading {
             text-align: center;
             color: #666;
@@ -71,10 +81,25 @@
         </div>
 
         <div class="weather-box">
-            <h2>波情報 (予測)</h2>
+            <h2>海面コンディション (予測)</h2>
             <div class="data-row"><span>波の高さ:</span> <span id="wave-height">-- m</span></div>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">※波のデータは沖合の予測値ベースです。</p>
+            <div class="data-row"><span>海水温:</span> <span id="sea-temp">-- ℃</span></div>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">※波と海水温のデータは沖合の予測値ベースです。</p>
         </div>
+
+        <div class="weather-box">
+            <h2>潮汐情報</h2>
+            <div class="data-row"><span>潮回り:</span> <span id="tide-type">--</span></div>
+            <div class="data-row"><span>満潮:</span> <span id="high-tide">--:-- (未取得)</span></div>
+            <div class="data-row"><span>干潮:</span> <span id="low-tide">--:-- (未取得)</span></div>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">※現在、満潮・干潮時刻は自動取得していません。パトロール時は<a href="https://www.data.jma.go.jp/gmd/kaiyou/db/tide/suisan/suisan.php?stn=EN" target="_blank">気象庁の潮位表（江の島）</a>等で正確な時間をご確認ください。</p>
+        </div>
+    </div>
+    
+    <div class="footer">
+        データ提供元: 
+        <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a><br>
+        ※本アプリは参考用です。実際の活動時は必ず目視や公式発表も併せて確認してください。
     </div>
 </div>
 
@@ -86,11 +111,47 @@
     // 天気と風のデータを取得 (Open-Meteo API)
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&windspeed_unit=ms`;
     
-    // 海洋データ（波）を取得 (Open-Meteo Marine API)
-    const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=wave_height`;
+    // 海洋データ（波、海水温）を取得 (Open-Meteo Marine API)
+    const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=wave_height,sea_surface_temperature`;
+
+    // 風向の角度を16方位の日本語に変換する関数
+    function getWindDirection16(degree) {
+        const directions = ["北", "北北東", "北東", "東北東", "東", "東南東", "南東", "南南東", "南", "南南西", "南西", "西南西", "西", "西北西", "北西", "北北西"];
+        // 角度を22.5度で割って四捨五入し、16方位のインデックスに変換
+        const index = Math.round(degree / 22.5) % 16;
+        return directions[index];
+    }
+
+    // 簡易的な月齢計算と潮回り判定
+    function calculateTide() {
+        const now = new Date();
+        // 2000年1月6日からの経過日数で月齢を概算
+        const epoch = new Date(Date.UTC(2000, 0, 6, 18, 14, 0)).getTime();
+        const diffDays = (now.getTime() - epoch) / (1000 * 60 * 60 * 24);
+        let age = diffDays % 29.530588853;
+        if (age < 0) age += 29.530588853;
+
+        const MathRoundAge = Math.round(age) % 30;
+        let tideType = "若潮"; // デフォルト
+        
+        if (MathRoundAge <= 2 || MathRoundAge >= 28 || (MathRoundAge >= 13 && MathRoundAge <= 17)) {
+            tideType = "大潮";
+        } else if ((MathRoundAge >= 3 && MathRoundAge <= 6) || (MathRoundAge >= 10 && MathRoundAge <= 12) || (MathRoundAge >= 18 && MathRoundAge <= 21) || (MathRoundAge >= 25 && MathRoundAge <= 27)) {
+            tideType = "中潮";
+        } else if (MathRoundAge === 7 || MathRoundAge === 8 || MathRoundAge === 22 || MathRoundAge === 23) {
+            tideType = "小潮";
+        } else if (MathRoundAge === 9 || MathRoundAge === 24) {
+            tideType = "長潮";
+        }
+
+        document.getElementById('tide-type').textContent = `${tideType} (月齢: ${age.toFixed(1)})`;
+    }
 
     async function fetchWeatherData() {
         try {
+            // 潮回りの計算を実行
+            calculateTide();
+
             // 2つのAPIを同時に呼び出す
             const [weatherRes, marineRes] = await Promise.all([
                 fetch(weatherUrl),
@@ -105,13 +166,22 @@
             // 画面の要素にデータをセット
             document.getElementById('temp').textContent = `${weatherData.current_weather.temperature} ℃`;
             document.getElementById('wind').textContent = `${weatherData.current_weather.windspeed} m/s`;
-            document.getElementById('wind-dir').textContent = `${weatherData.current_weather.winddirection} °`;
+            
+            const windDirDegree = weatherData.current_weather.winddirection;
+            document.getElementById('wind-dir').textContent = getWindDirection16(windDirDegree);
             
             // 波の高さ（取得できた場合）
-            if (marineData.current && marineData.current.wave_height !== null) {
+            if (marineData.current && marineData.current.wave_height !== null && marineData.current.wave_height !== undefined) {
                 document.getElementById('wave-height').textContent = `${marineData.current.wave_height} m`;
             } else {
                 document.getElementById('wave-height').textContent = "データなし";
+            }
+
+            // 海水温（取得できた場合）
+            if (marineData.current && marineData.current.sea_surface_temperature !== null && marineData.current.sea_surface_temperature !== undefined) {
+                document.getElementById('sea-temp').textContent = `${marineData.current.sea_surface_temperature} ℃`;
+            } else {
+                document.getElementById('sea-temp').textContent = "データなし";
             }
 
             // ローディングを消してコンテンツを表示
