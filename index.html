@@ -90,6 +90,41 @@
         .toggle-btn:hover {
             background: #e9f2ff;
         }
+        .warning-none {
+            font-size: 0.9rem;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .warning-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .warning-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #fff;
+        }
+        .badge-tokubetsu { background-color: #8b00ff; }
+        .badge-keiho     { background-color: #d9534f; }
+        .badge-chuiho    { background-color: #e8a000; color: #fff; }
+        .warning-name {
+            font-size: 0.95rem;
+            color: #333;
+        }
+        .warning-detail-link {
+            display: block;
+            font-size: 0.8rem;
+            color: #0056b3;
+            text-align: right;
+            margin-top: 8px;
+        }
     </style>
     <!-- Chart.jsのライブラリを読み込み -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -145,6 +180,19 @@
                 <div class="jma-overview" id="jma-overview-text"></div>
             </div>
             <div id="jma-error" style="display:none; color:#d9534f; font-size:0.9rem;">天気予報の取得に失敗しました。</div>
+        </div>
+
+        <!-- 気象庁 注意報・警報ブロック -->
+        <div class="weather-box" id="jma-warning-box">
+            <h2>注意報・警報 <span style="font-size:0.75rem; font-weight:normal; color:#888;">（気象庁）</span></h2>
+            <div id="jma-warning-loading" style="color:#666; font-size:0.9rem;">取得中...</div>
+            <div id="jma-warning-content" style="display:none;">
+                <div id="jma-warning-list"></div>
+                <a class="warning-detail-link"
+                   href="https://www.data.jma.go.jp/multi/warn/warn_detail.html?code=140010&selected_code=1421500&warning=all&lang=jp"
+                   target="_blank">▶ 詳細（気象庁）</a>
+            </div>
+            <div id="jma-warning-error" style="display:none; color:#d9534f; font-size:0.9rem;">注意報情報の取得に失敗しました。</div>
         </div>
     </div>
     
@@ -422,6 +470,90 @@
         });
     }
 
+    // 気象庁 警報コードを日本語名・種別に変換するマップ
+    const WARNING_CODE_MAP = {
+        '02': { name: '暴風雪警報',   level: 'keiho' },
+        '03': { name: '大雨警報',     level: 'keiho' },
+        '04': { name: '洪水警報',     level: 'keiho' },
+        '05': { name: '暴風警報',     level: 'keiho' },
+        '06': { name: '大雪警報',     level: 'keiho' },
+        '07': { name: '波浪警報',     level: 'keiho' },
+        '08': { name: '高潮警報',     level: 'keiho' },
+        '09': { name: '土砂災害警報', level: 'keiho' },
+        '10': { name: '大雨注意報',   level: 'chuiho' },
+        '12': { name: '大雪注意報',   level: 'chuiho' },
+        '13': { name: '風雪注意報',   level: 'chuiho' },
+        '14': { name: '雷注意報',     level: 'chuiho' },
+        '15': { name: '強風注意報',   level: 'chuiho' },
+        '16': { name: '波浪注意報',   level: 'chuiho' },
+        '17': { name: '融雪注意報',   level: 'chuiho' },
+        '18': { name: '洪水注意報',   level: 'chuiho' },
+        '19': { name: '高潮注意報',   level: 'chuiho' },
+        '20': { name: '濃霧注意報',   level: 'chuiho' },
+        '21': { name: '乾燥注意報',   level: 'chuiho' },
+        '22': { name: 'なだれ注意報', level: 'chuiho' },
+        '23': { name: '低温注意報',   level: 'chuiho' },
+        '24': { name: '霜注意報',     level: 'chuiho' },
+        '25': { name: '着氷注意報',   level: 'chuiho' },
+        '26': { name: '着雪注意報',   level: 'chuiho' },
+        '32': { name: '暴風雪特別警報', level: 'tokubetsu' },
+        '33': { name: '大雨特別警報',   level: 'tokubetsu' },
+        '35': { name: '暴風特別警報',   level: 'tokubetsu' },
+        '36': { name: '大雪特別警報',   level: 'tokubetsu' },
+        '37': { name: '波浪特別警報',   level: 'tokubetsu' },
+        '38': { name: '高潮特別警報',   level: 'tokubetsu' },
+    };
+
+    // 気象庁 注意報・警報を取得して表示する関数（茅ヶ崎市 1421500）
+    async function fetchJmaWarning() {
+        const warningUrl = 'https://www.jma.go.jp/bosai/warning/data/warning/140000.json';
+        try {
+            const res = await fetch(warningUrl);
+            if (!res.ok) throw new Error('JMA warning fetch failed');
+            const data = await res.json();
+
+            // areaTypes[1] が市区町村レベル
+            const cityAreas = data.areaTypes && data.areaTypes[1] ? data.areaTypes[1].areas : [];
+            const chigasakiArea = cityAreas.find(a => a.code === '1421500');
+
+            const listEl = document.getElementById('jma-warning-list');
+            listEl.innerHTML = '';
+
+            // 発表中（status が「解除」以外）の警報・注意報を抽出
+            const activeWarnings = chigasakiArea
+                ? chigasakiArea.warnings.filter(w => w.status !== '解除')
+                : [];
+
+            if (activeWarnings.length === 0) {
+                listEl.innerHTML = '<div class="warning-none">✅ 現在、注意報・警報はありません</div>';
+            } else {
+                // 特別警報 → 警報 → 注意報の順で表示
+                const order = { tokubetsu: 0, keiho: 1, chuiho: 2 };
+                activeWarnings.sort((a, b) => {
+                    const la = (WARNING_CODE_MAP[a.code] || {}).level || 'chuiho';
+                    const lb = (WARNING_CODE_MAP[b.code] || {}).level || 'chuiho';
+                    return (order[la] ?? 9) - (order[lb] ?? 9);
+                });
+                activeWarnings.forEach(w => {
+                    const info = WARNING_CODE_MAP[w.code] || { name: `コード${w.code}`, level: 'chuiho' };
+                    const levelLabel = info.level === 'tokubetsu' ? '特別警報' : info.level === 'keiho' ? '警報' : '注意報';
+                    const item = document.createElement('div');
+                    item.className = 'warning-item';
+                    item.innerHTML = `<span class="warning-badge badge-${info.level}">${levelLabel}</span><span class="warning-name">${info.name}</span>`;
+                    listEl.appendChild(item);
+                });
+            }
+
+            document.getElementById('jma-warning-loading').style.display = 'none';
+            document.getElementById('jma-warning-content').style.display = 'block';
+
+        } catch (e) {
+            console.error('JMA warning error:', e);
+            document.getElementById('jma-warning-loading').style.display = 'none';
+            document.getElementById('jma-warning-error').style.display = 'block';
+        }
+    }
+
     // 気象庁 天気予報を取得して表示する関数
     async function fetchJmaForecast() {
         const forecastUrl = 'https://www.jma.go.jp/bosai/forecast/data/forecast/140000.json';
@@ -488,8 +620,9 @@
             // 潮汐データ（満潮・干潮）の取得を実行
             fetchTideExtremes();
 
-            // 気象庁天気予報の取得
+            // 気象庁天気予報・注意報の取得
             fetchJmaForecast();
+            fetchJmaWarning();
 
             // 2つのAPIを同時に呼び出す
             const [weatherRes, marineRes] = await Promise.all([
