@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>茅ヶ崎ヘッドランド 気象情報</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 1.5rem;
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .weather-box {
+            background: #e9f2ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .weather-box h2 {
+            font-size: 1.2rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #004494;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        .error {
+            color: #d9534f;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🏖 茅ヶ崎ヘッドランド コンディション</h1>
+    
+    <div id="loading" class="loading">最新のデータを取得中...</div>
+    <div id="error" class="error" style="display: none;">データの取得に失敗しました。</div>
+
+    <div id="weather-content" style="display: none;">
+        <div class="weather-box">
+            <h2>現在の天気</h2>
+            <div class="data-row"><span>気温:</span> <span id="temp">-- ℃</span></div>
+            <div class="data-row"><span>風速:</span> <span id="wind">-- m/s</span></div>
+            <div class="data-row"><span>風向:</span> <span id="wind-dir">-- °</span></div>
+        </div>
+
+        <div class="weather-box">
+            <h2>波情報 (予測)</h2>
+            <div class="data-row"><span>波の高さ:</span> <span id="wave-height">-- m</span></div>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">※波のデータは沖合の予測値ベースです。</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 茅ヶ崎ヘッドランド付近の緯度経度
+    const LAT = 35.318;
+    const LON = 139.410;
+
+    // 天気と風のデータを取得 (Open-Meteo API)
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&windspeed_unit=ms`;
+    
+    // 海洋データ（波）を取得 (Open-Meteo Marine API)
+    const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=wave_height`;
+
+    async function fetchWeatherData() {
+        try {
+            // 2つのAPIを同時に呼び出す
+            const [weatherRes, marineRes] = await Promise.all([
+                fetch(weatherUrl),
+                fetch(marineUrl)
+            ]);
+
+            if (!weatherRes.ok || !marineRes.ok) throw new Error("API Network response was not ok");
+
+            const weatherData = await weatherRes.json();
+            const marineData = await marineRes.json();
+
+            // 画面の要素にデータをセット
+            document.getElementById('temp').textContent = `${weatherData.current_weather.temperature} ℃`;
+            document.getElementById('wind').textContent = `${weatherData.current_weather.windspeed} m/s`;
+            document.getElementById('wind-dir').textContent = `${weatherData.current_weather.winddirection} °`;
+            
+            // 波の高さ（取得できた場合）
+            if (marineData.current && marineData.current.wave_height !== null) {
+                document.getElementById('wave-height').textContent = `${marineData.current.wave_height} m`;
+            } else {
+                document.getElementById('wave-height').textContent = "データなし";
+            }
+
+            // ローディングを消してコンテンツを表示
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('weather-content').style.display = 'block';
+
+        } catch (error) {
+            console.error("Fetch error:", error);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+        }
+    }
+
+    // ページ読み込み時に実行
+    window.onload = fetchWeatherData;
+</script>
+
+</body>
+</html>
