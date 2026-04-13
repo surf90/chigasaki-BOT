@@ -1,0 +1,36 @@
+name: Update Tide Data
+
+on:
+  schedule:
+    # 毎日 UTC 15:05 （＝日本時間の午前0時05分） に実行
+    - cron: '5 15 * * *'
+  workflow_dispatch: # GitHubの画面から手動で実行するボタンも有効化
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # リポジトリにファイルを書き込む権限
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Fetch Tide Data
+      env:
+        # GitHub Secrets に登録したAPIキーを利用する
+        STORMGLASS_API_KEY: ${{ secrets.STORMGLASS_API_KEY }}
+      run: python fetch_tide.py
+
+    - name: Commit and Push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add tide_data.json
+        # データに更新（差分）がある場合のみコミットしてプッシュする
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update tide data" && git push)

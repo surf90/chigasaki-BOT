@@ -90,15 +90,17 @@
         <div class="weather-box">
             <h2>潮汐情報</h2>
             <div class="data-row"><span>潮回り:</span> <span id="tide-type">--</span></div>
-            <div class="data-row"><span>満潮:</span> <span id="high-tide">--:-- (未取得)</span></div>
-            <div class="data-row"><span>干潮:</span> <span id="low-tide">--:-- (未取得)</span></div>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">※現在、満潮・干潮時刻は自動取得していません。パトロール時は<a href="https://www.data.jma.go.jp/gmd/kaiyou/db/tide/suisan/suisan.php?stn=EN" target="_blank">気象庁の潮位表（江の島）</a>等で正確な時間をご確認ください。</p>
+            <div id="tide-extremes-container">
+                <div class="data-row"><span>満潮・干潮:</span> <span id="tide-status">読み込み中...</span></div>
+            </div>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">※正確な潮位は<a href="https://www.data.jma.go.jp/gmd/kaiyou/db/tide/suisan/suisan.php?stn=EN" target="_blank">気象庁の潮位表（江の島）</a>等をご確認ください。</p>
         </div>
     </div>
     
     <div class="footer">
         データ提供元: 
-        <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a><br>
+        <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a> / 
+        <a href="https://stormglass.io/" target="_blank">Stormglass</a><br>
         ※本アプリは参考用です。実際の活動時は必ず目視や公式発表も併せて確認してください。
     </div>
 </div>
@@ -147,10 +149,68 @@
         document.getElementById('tide-type').textContent = `${tideType} (月齢: ${age.toFixed(1)})`;
     }
 
+    // GitHub Actionsで自動生成されたJSONから満潮・干潮時間を取得する関数
+    async function fetchTideExtremes() {
+        const tideStatusEl = document.getElementById('tide-status');
+        
+        try {
+            // プレビュー環境（blob:やfile:など）では相対URLのfetchがエラーになるためスキップする
+            if (!window.location.protocol.startsWith('http')) {
+                throw new Error("プレビュー環境またはローカル環境のため、tide_data.jsonの読み込みをスキップします。");
+            }
+
+            // キャッシュ（古いデータ）を読み込まないよう、URLの末尾に現在の時間を付与して回避
+            const response = await fetch(`tide_data.json?t=${new Date().getTime()}`);
+
+            if (!response.ok) {
+                // 初回実行時などでJSONファイルがまだ存在しない場合
+                throw new Error("潮汐データの読み込みに失敗しました");
+            }
+
+            const data = await response.json();
+            
+            // データを表示
+            displayTideData(data.data);
+
+        } catch (error) {
+            console.warn(error.message); // エラーで画面を止めないよう警告レベルに変更
+            tideStatusEl.textContent = "データ未更新（またはプレビュー環境）";
+        }
+    }
+
+    // 潮汐データをHTMLに表示する関数
+    function displayTideData(extremes) {
+        const container = document.getElementById('tide-extremes-container');
+        container.innerHTML = ''; // 中身をクリア
+
+        if (!extremes || extremes.length === 0) {
+            container.innerHTML = '<div class="data-row"><span>満潮・干潮:</span> <span>データなし</span></div>';
+            return;
+        }
+
+        extremes.forEach(item => {
+            // Stormglassの時間はUTCなので、日本時間に変換
+            const dateObj = new Date(item.time);
+            const timeStr = dateObj.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+            
+            const typeStr = item.type === 'high' ? '満潮' : '干潮';
+            const color = item.type === 'high' ? '#d9534f' : '#0275d8'; // 満潮は赤系、干潮は青系
+
+            const row = document.createElement('div');
+            row.className = 'data-row';
+            row.innerHTML = `<span>${typeStr}:</span> <span style="color: ${color}; font-weight: bold;">${timeStr}</span>`;
+            container.appendChild(row);
+        });
+    }
+
+
     async function fetchWeatherData() {
         try {
             // 潮回りの計算を実行
             calculateTide();
+            
+            // 潮汐データ（満潮・干潮）の取得を実行
+            fetchTideExtremes();
 
             // 2つのAPIを同時に呼び出す
             const [weatherRes, marineRes] = await Promise.all([

@@ -1,6 +1,14 @@
 import streamlit as st
 import datetime
 import random
+import os
+import json
+import urllib.request
+import urllib.error
+
+LAT = 35.318
+LON = 139.410
+API_KEY = os.environ.get("STORMGLASS_API_KEY")
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -71,18 +79,55 @@ local_css()
 # --- Mock Data Functions ---
 
 def get_tide_info():
-    """Generates mock tide data."""
-    now = datetime.datetime.now()
-    tide_types = ["大潮 (Spring)", "中潮 (Middle)", "小潮 (Neap)", "長潮 (Long)", "若潮 (Wakashio)"]
-    today_type = tide_types[1] # Fixed for mock: Middle
-    
-    tides = [
-        {"time": "05:30", "level": "140cm", "type": "High (満潮)", "icon": "⬆️"},
-        {"time": "11:45", "level": "45cm", "type": "Low (干潮)", "icon": "⬇️"},
-        {"time": "17:20", "level": "135cm", "type": "High (満潮)", "icon": "⬆️"},
-        {"time": "23:10", "level": "50cm", "type": "Low (干潮)", "icon": "⬇️"},
-    ]
-    return today_type, tides
+    """Fetches real tide data from Storm Glass API."""
+    if not API_KEY:
+        st.error("Error: STORMGLASS_API_KEY is not set.")
+        return "Unknown", []
+
+    # 日本時間の「今日の00:00」〜「23:59」を計算し、UTCに変換する
+    JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
+    now_jst = datetime.datetime.now(JST)
+    start_jst = now_jst.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_jst = now_jst.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    start_utc = start_jst.astimezone(datetime.timezone.utc).isoformat()
+    end_utc = end_jst.astimezone(datetime.timezone.utc).isoformat()
+
+    url = f"https://api.stormglass.io/v2/tide/extremes/point?lat={LAT}&lng={LON}&start={start_utc}&end={end_utc}"
+
+    req = urllib.request.Request(url)
+    req.add_header('Authorization', API_KEY)
+
+    try:
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+            
+            # 取得したデータを tide_data.json として保存する
+            with open('tide_data.json', 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            
+            # Process data for display
+            tides = []
+            for item in data.get('data', []):
+                timestamp = datetime.datetime.fromisoformat(item['time'].replace('Z', '+00:00'))
+                time_jst = timestamp.astimezone(JST).strftime('%H:%M')
+                level_cm = f"{item['height'] * 100:.0f}cm"  # Assuming height in meters
+                tide_type = "High (満潮)" if item['type'] == 'high' else "Low (干潮)"
+                icon = "⬆️" if item['type'] == 'high' else "⬇️"
+                tides.append({
+                    "time": time_jst,
+                    "level": level_cm,
+                    "type": tide_type,
+                    "icon": icon
+                })
+            
+            # Mock tide type for now
+            tide_type = "中潮 (Middle)"
+            return tide_type, tides
+
+    except urllib.error.URLError as e:
+        st.error(f"Error fetching data: {e}")
+        return "Unknown", []
 
 def get_weather_forecast():
     """Generates mock weather forecast for next 6 hours."""
