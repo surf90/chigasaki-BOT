@@ -4,95 +4,134 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>茅ヶ崎ヘッドランド 気象情報</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f0f4f8;
-            color: #333;
+            font-family: Inter, "Noto Sans JP", sans-serif;
+            background-color: #f7f7f7;
+            color: #222222;
             margin: 0;
-            padding: 20px;
+            padding: 24px 16px;
+            font-size: 15px;
+            line-height: 1.7;
+            word-break: break-all;
+            overflow-wrap: break-word;
         }
         .container {
             max-width: 600px;
             margin: 0 auto;
-            background: #fff;
-            padding: 20px;
+            background: #ffffff;
+            padding: 32px 24px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         h1 {
             font-size: 1.5rem;
-            color: #0056b3;
+            font-weight: 600;
+            color: #222222;
             text-align: center;
-            margin-bottom: 20px;
+            margin-top: 0;
+            margin-bottom: 24px;
+            line-height: 1.25;
         }
         .weather-box {
-            background: #e9f2ff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
+            background: #f7f7f7;
+            padding: 20px 24px;
+            border-radius: 10px;
+            margin-bottom: 16px;
         }
         .weather-box h2 {
-            font-size: 1.2rem;
+            font-size: 1rem;
+            font-weight: 600;
             margin-top: 0;
-            margin-bottom: 10px;
-            color: #004494;
+            margin-bottom: 12px;
+            color: #222222;
+            letter-spacing: -0.28px;
         }
         .data-row {
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
-            font-size: 1.1rem;
+            font-size: 15px;
+            color: #222222;
+        }
+        .data-row span:first-child {
+            color: #707070;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: -0.28px;
+        }
+        .data-row span:last-child {
+            font-weight: 600;
         }
         .footer {
-            margin-top: 20px;
-            font-size: 0.8rem;
+            margin-top: 24px;
+            font-size: 12px;
             text-align: center;
-            color: #777;
+            color: #707070;
+            line-height: 1.7;
+            letter-spacing: -0.28px;
         }
         .footer a {
-            color: #0056b3;
+            color: #0275fd;
             text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
         }
         .loading {
             text-align: center;
-            color: #666;
+            color: #707070;
+            font-size: 14px;
         }
         .error {
-            color: #d9534f;
+            color: #c0392b;
             text-align: center;
+            font-size: 14px;
         }
         .current-time {
             text-align: center;
-            margin-bottom: 15px;
-            color: #555;
-            font-size: 1.1rem;
-            font-weight: bold;
+            margin-bottom: 16px;
+            color: #707070;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: -0.28px;
+            font-family: "IBM Plex Mono", monospace;
         }
         .jma-overview {
-            font-size: 0.9rem;
-            color: #444;
-            line-height: 1.6;
+            font-size: 14px;
+            color: #707070;
+            line-height: 1.7;
             margin-top: 8px;
             white-space: pre-wrap;
             display: none;
         }
         .toggle-btn {
-            background: none;
-            border: 1px solid #0056b3;
-            color: #0056b3;
+            background: transparent;
+            border: 1px solid #222222;
+            color: #222222;
             border-radius: 4px;
-            padding: 2px 8px;
-            font-size: 0.8rem;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            font-family: Inter, "Noto Sans JP", sans-serif;
             cursor: pointer;
-            margin-top: 6px;
+            margin-top: 8px;
+            letter-spacing: -0.28px;
+            transition: background 0.15s, color 0.15s;
         }
         .toggle-btn:hover {
-            background: #e9f2ff;
+            background: #222222;
+            color: #f7f7f7;
         }
         .warning-none {
-            font-size: 0.9rem;
-            color: #555;
+            font-size: 14px;
+            color: #707070;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -101,29 +140,47 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
         .warning-badge {
             display: inline-block;
-            font-size: 0.75rem;
-            font-weight: bold;
-            padding: 2px 8px;
-            border-radius: 4px;
-            color: #fff;
+            font-size: 11px;
+            font-weight: 500;
+            font-family: "IBM Plex Mono", monospace;
+            padding: 2px 10px;
+            border-radius: 500px;
+            color: #f7f7f7;
+            letter-spacing: -0.44px;
         }
-        .badge-tokubetsu { background-color: #8b00ff; }
-        .badge-keiho     { background-color: #d9534f; }
-        .badge-chuiho    { background-color: #e8a000; color: #fff; }
+        .badge-tokubetsu { background-color: #7c3aed; }
+        .badge-keiho     { background-color: #c0392b; }
+        .badge-chuiho    { background-color: #d97706; }
         .warning-name {
-            font-size: 0.95rem;
-            color: #333;
+            font-size: 14px;
+            color: #222222;
+            font-weight: 500;
         }
         .warning-detail-link {
             display: block;
-            font-size: 0.8rem;
-            color: #0056b3;
+            font-size: 12px;
+            color: #0275fd;
             text-align: right;
             margin-top: 8px;
+            letter-spacing: -0.28px;
+        }
+        p.note {
+            font-size: 13px;
+            color: #707070;
+            margin-top: 8px;
+            margin-bottom: 0;
+            line-height: 1.6;
+        }
+        p.note a {
+            color: #0275fd;
+            text-decoration: none;
+        }
+        p.note a:hover {
+            text-decoration: underline;
         }
     </style>
     <!-- Chart.jsのライブラリを読み込み -->
@@ -141,21 +198,21 @@
 
     <div id="weather-content" style="display: none;">
         <div class="weather-box">
-            <h2>現在の天気 <span style="font-size:0.75rem; font-weight:normal; color:#888;">（Open-Meteo）</span></h2>
+            <h2>現在の天気 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Open-Meteo）</span></h2>
             <div class="data-row"><span>気温:</span> <span id="temp">-- ℃</span></div>
             <div class="data-row"><span>風速:</span> <span id="wind">-- m/s</span></div>
             <div class="data-row"><span>風向:</span> <span id="wind-dir">-- °</span></div>
         </div>
 
         <div class="weather-box">
-            <h2>海面コンディション (予測) <span style="font-size:0.75rem; font-weight:normal; color:#888;">（Open-Meteo）</span></h2>
+            <h2>海面コンディション (予測) <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Open-Meteo）</span></h2>
             <div class="data-row"><span>波の高さ:</span> <span id="wave-height">-- m</span></div>
             <div class="data-row"><span>海水温:</span> <span id="sea-temp">-- ℃</span></div>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">※波と海水温のデータは沖合の予測値ベースです。</p>
+            <p class="note">※波と海水温のデータは沖合の予測値ベースです。</p>
         </div>
 
         <div class="weather-box">
-            <h2>潮汐情報 <span style="font-size:0.75rem; font-weight:normal; color:#888;">（Stormglass）</span></h2>
+            <h2>潮汐情報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Stormglass）</span></h2>
             <div class="data-row"><span>潮回り:</span> <span id="tide-type">--</span></div>
             <div id="tide-extremes-container">
                 <div class="data-row"><span>満潮・干潮:</span> <span id="tide-status">読み込み中...</span></div>
@@ -166,31 +223,31 @@
                 <canvas id="tideChart"></canvas>
             </div>
             
-            <p style="font-size: 0.85rem; color: #666; margin-top: 10px;">※正確な潮位は<a href="https://www.data.jma.go.jp/gmd/kaiyou/db/tide/suisan/suisan.php?stn=EN" target="_blank">気象庁の潮位表（江の島）</a>等をご確認ください。</p>
+            <p class="note">※正確な潮位は<a href="https://www.data.jma.go.jp/gmd/kaiyou/db/tide/suisan/suisan.php?stn=EN" target="_blank">気象庁の潮位表（江の島）</a>等をご確認ください。</p>
         </div>
 
         <!-- 気象庁 今日の天気予報ブロック -->
         <div class="weather-box" id="jma-forecast-box">
-            <h2>今日の天気予報 <span style="font-size:0.75rem; font-weight:normal; color:#888;">（気象庁）</span></h2>
-            <div id="jma-loading" style="color:#666; font-size:0.9rem;">取得中...</div>
+            <h2>今日の天気予報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（気象庁）</span></h2>
+            <div id="jma-loading" style="color:#707070; font-size:14px;">取得中...</div>
             <div id="jma-forecast-content" style="display:none;">
                 <div class="data-row"><span>天気:</span> <span id="jma-weather">--</span></div>
                 <div class="data-row"><span>降水確率:</span> <span id="jma-pop">--</span></div>
                 <button class="toggle-btn" id="jma-overview-toggle" onclick="toggleOverview()">概況を表示 ▼</button>
                 <div class="jma-overview" id="jma-overview-text"></div>
             </div>
-            <div id="jma-error" style="display:none; color:#d9534f; font-size:0.9rem;">天気予報の取得に失敗しました。</div>
+            <div id="jma-error" style="display:none; color:#c0392b; font-size:14px;">天気予報の取得に失敗しました。</div>
         </div>
 
         <!-- 気象庁 注意報・警報ブロック -->
         <div class="weather-box" id="jma-warning-box">
-            <h2>注意報・警報 <span style="font-size:0.75rem; font-weight:normal; color:#888;">（気象庁）</span></h2>
-            <div id="jma-warning-loading" style="color:#666; font-size:0.9rem;">取得中...</div>
+            <h2>注意報・警報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（気象庁）</span></h2>
+            <div id="jma-warning-loading" style="color:#707070; font-size:14px;">取得中...</div>
             <div id="jma-warning-content" style="display:none;">
                 <div id="jma-warning-list"></div>
-                <p style="font-size: 0.8rem; color: #666; margin-top: 8px; margin-bottom: 0;">※必ず<a href="https://www.data.jma.go.jp/multi/warn/warn_detail.html?code=140010&selected_code=1421500&warning=all&lang=jp" target="_blank">気象庁HP</a>で最新の情報を確認してください。</p>
+                <p class="note">※必ず<a href="https://www.data.jma.go.jp/multi/warn/warn_detail.html?code=140010&selected_code=1421500&warning=all&lang=jp" target="_blank">気象庁HP</a>で最新の情報を確認してください。</p>
             </div>
-            <div id="jma-warning-error" style="display:none; color:#d9534f; font-size:0.9rem;">注意報情報の取得に失敗しました。</div>
+            <div id="jma-warning-error" style="display:none; color:#c0392b; font-size:14px;">注意報情報の取得に失敗しました。</div>
         </div>
     </div>
     
@@ -201,7 +258,7 @@
         <a href="https://www.jma.go.jp/bosai/forecast/" target="_blank">気象庁JSON</a><br>
         ※本アプリは参考用です。実際の活動時は必ず目視や公式発表も併せて確認してください。<br>
         <br>
-        &copy; 2026 N., ISHIKAWA
+        &copy; 2026 ISHIKAWA, Natsuki
     </div>
 </div>
 
