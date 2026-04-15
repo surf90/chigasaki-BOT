@@ -263,11 +263,19 @@ lang: ja
     <div id="error" class="error" style="display: none;">データの取得に失敗しました。</div>
 
     <div id="weather-content" style="display: none;">
-        <div class="weather-box">
-            <h2>現在の天気 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Open-Meteo）</span></h2>
-            <div class="data-row"><span>気温:</span> <span id="temp">-- ℃</span></div>
-            <div class="data-row"><span>風速:</span> <span id="wind">-- m/s</span></div>
-            <div class="data-row"><span>風向:</span> <span id="wind-dir">-- °</span></div>
+        <div class="weather-box" id="tide-info-box">
+            <h2>潮汐情報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Stormglass）</span></h2>
+            <div class="data-row"><span>潮回り:</span> <span id="tide-type">--</span></div>
+            <div id="tide-extremes-container">
+                <div class="data-row"><span>満潮・干潮:</span> <span id="tide-status">読み込み中...</span></div>
+            </div>
+
+            <!-- タイドグラフ表示用コンテナ -->
+            <div id="tide-chart-container" style="display: none; margin-top: 20px; height: 160px;">
+                <canvas id="tideChart"></canvas>
+            </div>
+
+            <p class="note">※正確な潮位は<a href="https://www.data.jma.go.jp/kaiyou/db/tide/suisan/index.php" target="_blank">気象庁の潮位表（江の島）</a>等をご確認ください。</p>
         </div>
 
         <div class="weather-box">
@@ -275,21 +283,6 @@ lang: ja
             <div class="data-row"><span>波の高さ:</span> <span id="wave-height">-- m</span></div>
             <div class="data-row"><span>海水温:</span> <span id="sea-temp">-- ℃</span></div>
             <p class="note">※波と海水温のデータは沖合の予測値ベースです。</p>
-        </div>
-
-        <div class="weather-box">
-            <h2>潮汐情報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Stormglass）</span></h2>
-            <div class="data-row"><span>潮回り:</span> <span id="tide-type">--</span></div>
-            <div id="tide-extremes-container">
-                <div class="data-row"><span>満潮・干潮:</span> <span id="tide-status">読み込み中...</span></div>
-            </div>
-            
-            <!-- タイドグラフ表示用コンテナ -->
-            <div id="tide-chart-container" style="display: none; margin-top: 20px; height: 160px;">
-                <canvas id="tideChart"></canvas>
-            </div>
-            
-            <p class="note">※正確な潮位は<a href="https://www.data.jma.go.jp/kaiyou/db/tide/suisan/index.php" target="_blank">気象庁の潮位表（江の島）</a>等をご確認ください。</p>
         </div>
 
         <!-- 気象庁 今日の天気予報ブロック -->
@@ -314,6 +307,13 @@ lang: ja
                 <p class="note">※必ず<a href="https://www.data.jma.go.jp/multi/warn/warn_detail.html?code=140010&selected_code=1421500&warning=all&lang=jp" target="_blank">気象庁HP</a>で最新の情報を確認してください。</p>
             </div>
             <div id="jma-warning-error" style="display:none; color:#c0392b; font-size:14px;">注意報情報の取得に失敗しました。</div>
+        </div>
+
+        <div class="weather-box">
+            <h2>現在の天気 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Open-Meteo）</span></h2>
+            <div class="data-row"><span>気温:</span> <span id="temp">-- ℃</span></div>
+            <div class="data-row"><span>風速:</span> <span id="wind">-- m/s</span></div>
+            <div class="data-row"><span>風向:</span> <span id="wind-dir">-- °</span></div>
         </div>
     </div>
     
@@ -509,7 +509,7 @@ lang: ja
     // 情報元の表記を動的に変更するヘルパー関数
     function updateTideSource(sourceName) {
         // "潮汐情報" の横にある span タグを取得してテキストを更新
-        const titleSpan = document.querySelector('.weather-box:nth-child(3) h2 span');
+        const titleSpan = document.querySelector('#tide-info-box h2 span');
         if (titleSpan) {
             titleSpan.textContent = `（${sourceName}）`;
         }
