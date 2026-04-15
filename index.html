@@ -316,6 +316,7 @@ lang: ja
             <div id="jma-forecast-content" style="display:none;">
                 <div class="data-row"><span>天気:</span> <span id="jma-weather">--</span></div>
                 <div class="data-row"><span>降水確率:</span> <span id="jma-pop">--</span></div>
+                <div class="data-row" id="jma-typhoon-notice" style="display:none; color:#c0392b; font-weight:bold;">⚠ 台風情報あり</div>
                 <button class="toggle-btn" id="jma-overview-toggle" onclick="toggleOverview()">概況を表示 ▼</button>
                 <div class="jma-overview" id="jma-overview-text"></div>
             </div>
@@ -827,6 +828,8 @@ lang: ja
 
             // 概況テキスト
             document.getElementById('jma-overview-text').textContent = overviewData.text || '';
+            const hasTyphoon = overviewData.text && overviewData.text.includes('台風');
+            document.getElementById('jma-typhoon-notice').style.display = hasTyphoon ? 'flex' : 'none';
 
             document.getElementById('jma-loading').style.display = 'none';
             document.getElementById('jma-forecast-content').style.display = 'block';
