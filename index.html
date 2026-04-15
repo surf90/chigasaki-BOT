@@ -416,7 +416,8 @@ lang: ja
             tideType = "不明";
         }
 
-        document.getElementById('tide-type').textContent = `${tideType} (月齢: ${age.toFixed(1)} / ${ageSource})`;
+        const ageLabel = ageSource === "NASA" ? `月齢: ${age.toFixed(1)}` : `月齢: ${age.toFixed(1)} / 計算値`;
+        document.getElementById('tide-type').textContent = `${tideType} (${ageLabel})`;
     }
 
     // プレビュー用のダミー潮汐データを生成する関数
