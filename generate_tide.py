@@ -25,7 +25,8 @@ def parse_jma_tide_data(year, station_code="D8"):
             dd_str = line[76:78]
             
             full_year = 2000 + int(yy_str)
-            date_key = f"{full_year}-{mm_str}-{dd_str}" 
+            # 空白を取り除き、必ず2桁のゼロ埋め（04など）にする
+            date_key = f"{full_year}-{mm_str.strip().zfill(2)}-{dd_str.strip().zfill(2)}"
 
             def extract_extremes(data_str, type_name):
                 extremes = []
