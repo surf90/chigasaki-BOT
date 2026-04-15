@@ -21,6 +21,55 @@ lang: ja
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary">
 
+    <!-- 正規URL -->
+    <link rel="canonical" href="{{ site.url }}{{ site.baseurl }}/">
+
+    <!-- OGP 追加タグ -->
+    <meta property="og:url"       content="{{ site.url }}{{ site.baseurl }}/">
+    <meta property="og:locale"    content="ja_JP">
+    <meta property="og:site_name" content="{{ page.title }}">
+    <meta property="og:image"     content="{{ site.url }}{{ site.baseurl }}/favicon.ico">
+
+    <!-- Twitter Card 追加タグ -->
+    <meta name="twitter:title"       content="{{ page.title }}">
+    <meta name="twitter:description" content="{{ page.description }}">
+    <meta name="twitter:image"       content="{{ site.url }}{{ site.baseurl }}/favicon.ico">
+
+    <!-- JSON-LD 構造化データ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "{{ site.url }}{{ site.baseurl }}/#website",
+          "url": "{{ site.url }}{{ site.baseurl }}/",
+          "name": "{{ page.title }}",
+          "description": "{{ page.description }}",
+          "inLanguage": "ja"
+        },
+        {
+          "@type": "WebPage",
+          "@id": "{{ site.url }}{{ site.baseurl }}/#webpage",
+          "url": "{{ site.url }}{{ site.baseurl }}/",
+          "name": "{{ page.title }}",
+          "description": "{{ page.description }}",
+          "isPartOf": { "@id": "{{ site.url }}{{ site.baseurl }}/#website" },
+          "inLanguage": "ja",
+          "about": {
+            "@type": "Place",
+            "name": "茅ヶ崎ヘッドランド",
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": 35.318,
+              "longitude": 139.410
+            }
+          }
+        }
+      ]
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
@@ -362,7 +411,7 @@ lang: ja
 
             // --- STEP 1: まずは気象庁のデータ (tidedata.json) を試す ---
             try {
-                const jmaResponse = await fetch(`tidedata.json?t=${now.getTime()}`);
+                const jmaResponse = await fetch(`data/tidedata.json?t=${now.getTime()}`);
                 if (jmaResponse.ok) {
                     const allTideData = await jmaResponse.json();
                     const todayTide = allTideData[todayStr];
@@ -379,7 +428,7 @@ lang: ja
             }
 
             // --- STEP 2: フォールバック (GitHub Actionsが生成した tide_data.json を試す) ---
-            const sgResponse = await fetch(`tide_data.json?t=${now.getTime()}`);
+            const sgResponse = await fetch(`data/tide_data.json?t=${now.getTime()}`);
             if (!sgResponse.ok) {
                 throw new Error("Stormglassデータ (tide_data.json) の読み込みにも失敗しました");
             }

@@ -25,12 +25,12 @@ jobs:
       env:
         # GitHub Secrets に登録したAPIキーを利用する
         STORMGLASS_API_KEY: ${{ secrets.STORMGLASS_API_KEY }}
-      run: python fetch_tide.py
+      run: python scripts/fetch_tide.py
 
     - name: Commit and Push changes
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add tide_data.json
+        git add data/tide_data.json
         # データに更新（差分）がある場合のみコミットしてプッシュする
         git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update tide data" && git push)
