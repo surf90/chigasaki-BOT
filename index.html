@@ -400,9 +400,29 @@ lang: ja
 
     // 簡易的な月齢計算と潮回り判定
     async function calculateTide() {
-        const now = new Date();
+        // 1. 対象日（今日）の「12時00分」のDateオブジェクトを生成する
+        const targetDate = new Date();
+        targetDate.setHours(12, 0, 0, 0); // 時・分・秒・ミリ秒を12:00:00.000に固定
+    
         let age = null;
         let ageSource = "計算値";
+    
+        // 2. その「12時00分」時点での月齢（age）を算出する
+        // ※もし独自の計算式や外部APIがあれば、そちらを `targetDate` に対して適用してください。
+        // ここでは一般的な簡易計算（基準となる新月からの経過日数を利用した計算）の例を記載します。
+        
+        const synodicMonth = 29.530588853; // 平均朔望月（新月から次の新月までの日数）
+        // 基準となる過去の明確な新月（例: 2000年1月6日 18:14:00 JST）
+        const knownNewMoon = new Date('2000-01-06T18:14:00+09:00').getTime(); 
+        
+        // 12時のタイムスタンプとの差分から月齢を計算
+        const diffMs = targetDate.getTime() - knownNewMoon;
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+         
+        age = diffDays % synodicMonth;
+        if (age < 0) {
+            age += synodicMonth; // 過去の日付を計算する場合のマイナス値補正
+        }
 
         // Step 1: NASA SVS JSONから月齢取得を試みる
         // データはUTC基準で1/1 00:00から1時間ごとに格納されている
