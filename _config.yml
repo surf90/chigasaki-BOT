@@ -1,6 +1,18 @@
-plugins: 
+# ─── サイト基本情報 ───────────────────────────────────────────
+url: "https://surf90.github.io"
+baseurl: "/chigasaki-beach-weather"
+lang: "ja"
+
+# ─── プラグイン ───────────────────────────────────────────────
+plugins:
   - jekyll-sitemap
-show_downloads: false
-google_analytics: surf90
-# テーマによっては以下のようなフラグで制御します
-show_edit_on_github: false
+
+# ─── Jekyllビルドから除外するファイル ────────────────────────
+exclude:
+  - scripts/
+  - data/
+  - DESIGN.md
+  - DEPLOYMENT.md
+  - requirements.txt
+
+# google_analytics: G-XXXXXXXXXX  # GA4 IDが確定次第ここに追記
