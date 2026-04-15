@@ -10,7 +10,6 @@ plugins:
 # ─── Jekyllビルドから除外するファイル ────────────────────────
 exclude:
   - scripts/
-  - data/
   - DESIGN.md
   - DEPLOYMENT.md
   - requirements.txt
