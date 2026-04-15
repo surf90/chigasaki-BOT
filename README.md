@@ -30,6 +30,58 @@ python -m http.server 8000
 
 起動後、ブラウザで http://localhost:8000 にアクセスしてください。
 
+## 🌕 月齢データ（mooninfo_YYYY.json）の年間更新手順
+
+NASA SVS（Scientific Visualization Studio）が毎年公開している公式月齢データを手動で取得し、配置する手順です。
+
+**推奨実行時期:** 毎年12月下旬〜1月上旬（翌年版のページとJSONファイルへのリンクが公開されたタイミング）
+
+### 手順
+
+**1. NASA SVSのページにアクセス**
+
+ブラウザで以下のURLを開き、対象年の "Moon Phase and Libration YYYY" のページへ進みます：
+
+```
+https://svs.gsfc.nasa.gov/gallery/moonphase/
+```
+
+**2. JSONファイルのダウンロード**
+
+各年のページ内に "the data in the table for all of YYYY can be downloaded as a **JSON file**" というリンクがあります。そこから `mooninfo_YYYY.json` をダウンロードします。
+
+参考URLパターン（毎年パス内の数字が変わるため、必ず公式ページから取得してください）：
+```
+https://svs.gsfc.nasa.gov/vis/a000000/a005500/a005587/mooninfo_2026.json
+```
+
+**3. ファイルの配置**
+
+ダウンロードしたファイルを `data/` ディレクトリに配置します。ファイル名は変更不要です：
+
+```
+data/
+├── mooninfo_2026.json  ← 配置するファイル
+├── tidedata.json
+└── tide_data.json
+```
+
+**4. コミット・プッシュ**
+
+```bash
+git add data/mooninfo_YYYY.json
+git commit -m "Update: mooninfo_YYYY.json を追加"
+git push
+```
+
+**補足**
+
+- データはUTC（協定世界時）基準で1時間ごとに記録されています（1年分 = 8,760〜8,784エントリ）
+- 日本時間（JST = UTC+9）の1月1日 0〜8時は、前年のJSONが参照されます。前年ファイルが存在しない場合は数式による概算値で自動補完されます
+- 月齢の表示に "NASA" と出ていれば正常にNASAデータを参照中、"計算値" と出ていればフォールバック中です
+
+---
+
 ## 🌊 潮汐データ（tidedata.json）の年間更新手順
 
 気象庁のサイトから1年分の潮汐テキストデータを取得し、アプリ用のJSONファイルに変換する手順です。

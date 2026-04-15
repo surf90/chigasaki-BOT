@@ -318,10 +318,11 @@ lang: ja
     </div>
     
     <div class="footer">
-        データ提供元: 
-        <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a> / 
-        <a href="https://stormglass.io/" target="_blank">Stormglass</a> / 
-        <a href="https://www.jma.go.jp/bosai/forecast/" target="_blank">気象庁</a><br>
+        データ提供元:
+        <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a> /
+        <a href="https://stormglass.io/" target="_blank">Stormglass</a> /
+        <a href="https://www.jma.go.jp/bosai/forecast/" target="_blank">気象庁</a> /
+        <a href="https://svs.gsfc.nasa.gov/gallery/moonphase/" target="_blank">NASA SVS</a><br>
         ※本アプリは参考用です。実際の活動時は必ず目視や公式発表も併せて確認してください。<br>
         <br>
         &copy; 2026 ISHIKAWA, Natsuki | MIT License
@@ -358,13 +359,39 @@ lang: ja
     }
 
     // 簡易的な月齢計算と潮回り判定
-    function calculateTide() {
+    async function calculateTide() {
         const now = new Date();
-        // 2000年1月6日からの経過日数で月齢を概算
-        const epoch = new Date(Date.UTC(2000, 0, 6, 18, 14, 0)).getTime();
-        const diffDays = (now.getTime() - epoch) / (1000 * 60 * 60 * 24);
-        let age = diffDays % 29.530588853;
-        if (age < 0) age += 29.530588853;
+        let age = null;
+        let ageSource = "計算値";
+
+        // Step 1: NASA SVS JSONから月齢取得を試みる
+        // データはUTC基準で1/1 00:00から1時間ごとに格納されている
+        const utcYear = now.getUTCFullYear();
+        try {
+            const resp = await fetch(`data/mooninfo_${utcYear}.json?t=${now.getTime()}`);
+            if (resp.ok) {
+                const moonData = await resp.json();
+                const startOfYear = Date.UTC(utcYear, 0, 1, 0, 0, 0);
+                const hourIndex = Math.floor((now.getTime() - startOfYear) / (1000 * 60 * 60));
+                if (hourIndex >= 0 && hourIndex < moonData.length) {
+                    const entry = moonData[hourIndex];
+                    if (entry && entry.age !== undefined) {
+                        age = parseFloat(entry.age);
+                        ageSource = "NASA";
+                    }
+                }
+            }
+        } catch (e) {
+            // NASA JSONが見つからない場合は数式にフォールバック
+        }
+
+        // Step 2: フォールバック — 2000年1月6日からの経過日数で月齢を概算
+        if (age === null) {
+            const epoch = new Date(Date.UTC(2000, 0, 6, 18, 14, 0)).getTime();
+            const diffDays = (now.getTime() - epoch) / (1000 * 60 * 60 * 24);
+            age = diffDays % 29.530588853;
+            if (age < 0) age += 29.530588853;
+        }
 
         const MathRoundAge = Math.round(age) % 30;
         let tideType = "";
@@ -389,7 +416,7 @@ lang: ja
             tideType = "不明";
         }
 
-        document.getElementById('tide-type').textContent = `${tideType} (月齢: ${age.toFixed(1)})`;
+        document.getElementById('tide-type').textContent = `${tideType} (月齢: ${age.toFixed(1)} / ${ageSource})`;
     }
 
     // プレビュー用のダミー潮汐データを生成する関数
@@ -790,7 +817,7 @@ lang: ja
     async function fetchWeatherData() {
         try {
             // 潮回りの計算を実行
-            calculateTide();
+            await calculateTide();
             
             // 潮汐データ（満潮・干潮）の取得を実行
             fetchTideExtremes();
