@@ -566,13 +566,6 @@ lang: ja
         }
     }
 
-    function updateTideSource(sourceName) {
-        const titleSpan = document.querySelector('.weather-box:nth-child(3) h2 span');
-        if (titleSpan) {
-            titleSpan.textContent = `（${sourceName}）`;
-        }
-    }
-
     // 情報元の表記を動的に変更するヘルパー関数
     function updateTideSource(sourceName) {
         // "潮汐情報" の横にある span タグを取得してテキストを更新
