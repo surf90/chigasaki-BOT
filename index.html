@@ -562,7 +562,8 @@ lang: ja
             }
 
             // --- STEP 2: フォールバック (GitHub Actionsが生成した tide_data.json を試す) ---
-            const sgResponse = await fetch(`data/tide_data.json?t=${now.getTime()}`);
+            const hour12Buster = Math.floor(Date.now() / (12 * 60 * 60 * 1000));
+            const sgResponse = await fetch(`data/tide_data.json?t=${hour12Buster}`);
             if (!sgResponse.ok) {
                 throw new Error("Stormglassデータ (tide_data.json) の読み込みにも失敗しました");
             }
@@ -798,7 +799,9 @@ lang: ja
 
     // 気象庁 注意報・警報を取得して表示する関数（茅ヶ崎市 1421500）
     async function fetchJmaWarning() {
-        const warningUrl = 'https://www.jma.go.jp/bosai/warning/data/warning/140000.json';
+        // 命に関わる情報は秒単位でキャッシュ回避して直接取得
+        const secBuster = Math.floor(Date.now() / 1000);
+        const warningUrl = `https://www.jma.go.jp/bosai/warning/data/warning/140000.json?t=${secBuster}`;
         try {
             const res = await fetch(warningUrl);
             if (!res.ok) throw new Error('JMA warning fetch failed');
@@ -849,19 +852,17 @@ lang: ja
         }
     }
 
-    // 気象庁 天気予報を取得して表示する関数
+    // 気象庁 天気予報を取得して表示する関数（GitHub Actions生成の静的JSONを読み込む）
     async function fetchJmaForecast() {
-        const forecastUrl = 'https://www.jma.go.jp/bosai/forecast/data/forecast/140000.json';
-        const overviewUrl = 'https://www.jma.go.jp/bosai/forecast/data/overview_forecast/140000.json';
+        // GitHub Actionsが1日4回更新するJSONを8時間キャッシュ単位で読み込む
+        const hour8Buster = Math.floor(Date.now() / (8 * 60 * 60 * 1000));
         try {
-            const [forecastRes, overviewRes] = await Promise.all([
-                fetch(forecastUrl),
-                fetch(overviewUrl)
-            ]);
-            if (!forecastRes.ok || !overviewRes.ok) throw new Error('JMA fetch failed');
+            const res = await fetch(`data/forecast_data.json?t=${hour8Buster}`);
+            if (!res.ok) throw new Error('forecast_data.json fetch failed');
 
-            const forecastData = await forecastRes.json();
-            const overviewData = await overviewRes.json();
+            const data = await res.json();
+            const forecastData = data.forecast;
+            const overviewData = data.overview;
 
             // 1つ目のデータブロック（今日+明日+明後日の短期予報）
             const shortTerm = forecastData[0];
@@ -921,36 +922,40 @@ lang: ja
             fetchJmaForecast();
             fetchJmaWarning();
 
-            // 2つのAPIを同時に呼び出す
-            const [weatherRes, marineRes] = await Promise.all([
-                fetch(weatherUrl),
-                fetch(marineUrl)
+            // Open-Meteoは秒単位でキャッシュ回避して直接取得
+            const secBuster = Math.floor(Date.now() / 1000);
+            const [weatherRes, marineRes] = await Promise.allSettled([
+                fetch(`${weatherUrl}&t=${secBuster}`).then(r => r.ok ? r.json() : Promise.reject()),
+                fetch(`${marineUrl}&t=${secBuster}`).then(r => r.ok ? r.json() : Promise.reject())
             ]);
 
-            if (!weatherRes.ok || !marineRes.ok) throw new Error("API Network response was not ok");
-
-            const weatherData = await weatherRes.json();
-            const marineData = await marineRes.json();
-
             // 画面の要素にデータをセット
-            document.getElementById('temp').textContent = `${weatherData.current_weather.temperature} ℃`;
-            document.getElementById('wind').textContent = `${weatherData.current_weather.windspeed} m/s`;
-            
-            const windDirDegree = weatherData.current_weather.winddirection;
-            document.getElementById('wind-dir').textContent = getWindDirection16(windDirDegree);
-            
-            // 波の高さ（取得できた場合）
-            if (marineData.current && marineData.current.wave_height !== null && marineData.current.wave_height !== undefined) {
-                document.getElementById('wave-height').textContent = `${marineData.current.wave_height} m`;
-            } else {
-                document.getElementById('wave-height').textContent = "データなし";
+            if (weatherRes.status === 'fulfilled') {
+                const weatherData = weatherRes.value;
+                document.getElementById('temp').textContent = `${weatherData.current_weather.temperature} ℃`;
+                document.getElementById('wind').textContent = `${weatherData.current_weather.windspeed} m/s`;
+                document.getElementById('wind-dir').textContent = getWindDirection16(weatherData.current_weather.winddirection);
             }
 
-            // 海水温（取得できた場合）
-            if (marineData.current && marineData.current.sea_surface_temperature !== null && marineData.current.sea_surface_temperature !== undefined) {
-                document.getElementById('sea-temp').textContent = `${marineData.current.sea_surface_temperature} ℃`;
-            } else {
-                document.getElementById('sea-temp').textContent = "データなし";
+            if (marineRes.status === 'fulfilled') {
+                const marineData = marineRes.value;
+                // 波の高さ（取得できた場合）
+                if (marineData.current && marineData.current.wave_height !== null && marineData.current.wave_height !== undefined) {
+                    document.getElementById('wave-height').textContent = `${marineData.current.wave_height} m`;
+                } else {
+                    document.getElementById('wave-height').textContent = "データなし";
+                }
+
+                // 海水温（取得できた場合）
+                if (marineData.current && marineData.current.sea_surface_temperature !== null && marineData.current.sea_surface_temperature !== undefined) {
+                    document.getElementById('sea-temp').textContent = `${marineData.current.sea_surface_temperature} ℃`;
+                } else {
+                    document.getElementById('sea-temp').textContent = "データなし";
+                }
+            }
+
+            if (weatherRes.status === 'rejected' && marineRes.status === 'rejected') {
+                throw new Error("Open-Meteo API の取得に失敗しました");
             }
 
             // ローディングを消してコンテンツを表示
