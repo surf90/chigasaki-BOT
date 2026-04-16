@@ -33,6 +33,11 @@ https://surf90.github.io/chigasaki-beach-weather/
   ※現在のコードが `1420500`（藤沢市）になっている場合は、修正後の記載を推奨します。
 * **天気予報**: 神奈川県東部（コード: `140010`）の予報区データを使用。
 
+
+## 🛠 開発者・管理者向け情報
+<details>
+<summary><b>（クリックで展開）</b></summary>
+
 ## 使い方（ローカルでの開発・確認方法）
 
 本アプリは静的なHTML/JavaScriptで構築されていますが、潮汐データ（tide_data.json）の読み込みに fetch APIを使用しています。
@@ -135,6 +140,8 @@ python generate_tide.py
 データの取得元: 気象庁 潮汐観測資料（江の島）
 
 https://www.google.com/search?q=https://www.data.jma.go.jp/kaiyou/db/tide/suisan/txt/
+
+</details>
 
 ## 使用技術・API
 
