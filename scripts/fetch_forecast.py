@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 
 def fetch_json(url):
     """URLからJSONデータを取得する。"""
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (ChigasakiBot/1.0)'})
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (ChigaLog/1.0)'})
     try:
         with urllib.request.urlopen(req) as response:
             return json.loads(response.read().decode('utf-8'))
