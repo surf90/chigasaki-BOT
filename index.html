@@ -75,13 +75,15 @@ lang: ja
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+
     <style>
         *, *::before, *::after {
             box-sizing: border-box;
         }
         body {
             font-family: Inter, "Noto Sans JP", sans-serif;
-            background-color: #FFFBEB; /* 砂浜ホワイト */
+            background: linear-gradient(160deg, #FFFBEB 0%, #EFF6FF 100%);
+            min-height: 100vh;
             color: #222222;
             margin: 0;
             padding: 24px 16px;
@@ -93,19 +95,75 @@ lang: ja
         .container {
             max-width: 600px;
             margin: 0 auto;
-            background: #ECFEFF; /* 淡いミント */
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             padding: 32px 24px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,86,120,0.10);
         }
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             font-weight: 600;
-            color: #222222;
+            color: #0e4f6e;
             text-align: center;
             margin-top: 0;
             margin-bottom: 24px;
             line-height: 1.25;
+        }
+        /* ヒーローカード */
+        .hero-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .hero-card {
+            background: linear-gradient(135deg, #0e7490 0%, #0284c7 100%);
+            border-radius: 12px;
+            padding: 14px 8px 12px;
+            text-align: center;
+            color: #fff;
+        }
+        .hero-card-label {
+            font-size: 11px;
+            font-weight: 500;
+            opacity: 0.85;
+            letter-spacing: 0.02em;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .hero-card-value {
+            font-size: 1.35rem;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            display: block;
+        }
+        .hero-card-unit {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+        /* スケルトンローディング */
+        @keyframes shimmer {
+            0%   { background-position: -400px 0; }
+            100% { background-position:  400px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 800px 100%;
+            animation: shimmer 1.4s infinite linear;
+            border-radius: 6px;
+        }
+        .skeleton-line {
+            height: 14px;
+            margin-bottom: 12px;
+        }
+        .skeleton-line.wide  { width: 100%; }
+        .skeleton-line.mid   { width: 70%; }
+        .skeleton-line.short { width: 45%; }
+        #skeleton-loading {
+            padding: 4px 0;
         }
         .subtitle {
             font-size: 12px;
@@ -162,13 +220,16 @@ lang: ja
         .current-time {
             text-align: right;
             margin-bottom: 16px;
-            color: #707070;
+            color: #0e7490;
             font-size: 12px;
             font-weight: 500;
             letter-spacing: -0.28px;
             font-family: "IBM Plex Mono", monospace;
             cursor: pointer;
             transition: opacity 0.2s;
+            border-bottom: 1px dashed #0e7490;
+            display: inline-block;
+            float: right;
         }
         .current-time:hover { opacity: 0.6; }
         .current-time:active { opacity: 0.4; }
@@ -200,10 +261,10 @@ lang: ja
         }
         .toggle-btn {
             background: transparent;
-            border: 1px solid #222222;
-            color: #222222;
-            border-radius: 4px;
-            padding: 4px 12px;
+            border: 1px solid #0e7490;
+            color: #0e7490;
+            border-radius: 6px;
+            padding: 8px 16px;
             font-size: 12px;
             font-weight: 500;
             font-family: Inter, "Noto Sans JP", sans-serif;
@@ -213,8 +274,8 @@ lang: ja
             transition: background 0.15s, color 0.15s;
         }
         .toggle-btn:hover {
-            background: #222222;
-            color: #f7f7f7;
+            background: #0e7490;
+            color: #fff;
         }
         .warning-none {
             font-size: 14px;
@@ -330,7 +391,7 @@ lang: ja
         transition: opacity 0.3s ease;
     }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 </head>
 <body>
 
@@ -338,14 +399,46 @@ lang: ja
     <h1>ちがログ(beta)</h1>
     <span class="subtitle">茅ヶ崎の海を、５秒でログする。</span>
     
-    <div id="current-time" class="current-time"></div>
-    
-    <div id="loading" class="loading">最新のデータを取得中...</div>
+    <div style="overflow: hidden; margin-bottom: 4px;">
+        <div id="current-time" class="current-time"></div>
+    </div>
+
+    <div id="skeleton-loading">
+        <div class="hero-cards" style="margin-bottom:20px;">
+            <div style="background:#e2e8f0;border-radius:12px;height:72px;" class="skeleton"></div>
+            <div style="background:#e2e8f0;border-radius:12px;height:72px;" class="skeleton"></div>
+            <div style="background:#e2e8f0;border-radius:12px;height:72px;" class="skeleton"></div>
+        </div>
+        <div class="skeleton skeleton-line wide"></div>
+        <div class="skeleton skeleton-line mid"></div>
+        <div class="skeleton skeleton-line short"></div>
+        <div class="skeleton skeleton-line wide" style="margin-top:20px;"></div>
+        <div class="skeleton skeleton-line mid"></div>
+    </div>
     <div id="error" class="error" style="display: none;">データの取得に失敗しました。</div>
 
     <div id="weather-content" style="display: none;">
+        <!-- ヒーローカード -->
+        <div class="hero-cards">
+            <div class="hero-card">
+                <span class="hero-card-label">🌊 波の高さ</span>
+                <span class="hero-card-value" id="hero-wave">--</span>
+                <span class="hero-card-unit">m</span>
+            </div>
+            <div class="hero-card">
+                <span class="hero-card-label">🌡 水温</span>
+                <span class="hero-card-value" id="hero-sea-temp">--</span>
+                <span class="hero-card-unit">℃</span>
+            </div>
+            <div class="hero-card">
+                <span class="hero-card-label">🌤 気温</span>
+                <span class="hero-card-value" id="hero-temp">--</span>
+                <span class="hero-card-unit">℃</span>
+            </div>
+        </div>
+
         <div class="weather-box" id="tide-info-box">
-            <h2>潮汐情報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Stormglass）</span></h2>
+            <h2>🌊 潮汐情報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Stormglass）</span></h2>
             <div class="data-row"><span>潮回り:</span> <span id="tide-type">--</span></div>
             <div id="tide-extremes-container">
                 <div class="data-row"><span>満潮・干潮:</span> <span id="tide-status">読み込み中...</span></div>
@@ -359,14 +452,14 @@ lang: ja
         </div>
 
         <div class="weather-box">
-            <h2>海面状況 <small>(予測)</small> <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Open-Meteo）</span></h2>
+            <h2>🌊 海面状況 <small>(予測)</small> <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Open-Meteo）</span></h2>
             <div class="data-row"><span>波の高さ:</span> <span id="wave-height">-- m</span></div>
             <div class="data-row"><span>海水温:</span> <span id="sea-temp">-- ℃</span></div>
             <p class="note">※波と海水温のデータは沖合の予測値ベースです。</p>
         </div>
 
         <div class="weather-box" id="jma-forecast-box">
-            <h2>天気予報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（気象庁）</span></h2>
+            <h2>🌤️ 天気予報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（気象庁）</span></h2>
             <div id="jma-loading" style="color:#707070; font-size:14px;">取得中...</div>
             <div id="jma-forecast-content" style="display:none;">
                 <div class="data-row"><span>天気:</span> <span id="jma-weather">--</span></div>
@@ -379,7 +472,7 @@ lang: ja
         </div>
 
         <div class="weather-box" id="jma-warning-box">
-            <h2>注意報・警報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（気象庁）</span></h2>
+            <h2>⚠️ 注意報・警報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（気象庁）</span></h2>
             <div id="jma-warning-loading" style="color:#707070; font-size:14px;">取得中...</div>
             <div id="jma-warning-content" style="display:none;">
                 <div id="jma-warning-list"></div>
@@ -389,7 +482,7 @@ lang: ja
         </div>
 
         <div class="weather-box">
-            <h2>現在の天気<small>（参考）</small> <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Open-Meteo）</span></h2>
+            <h2>🌡️ 現在の天気<small>（参考）</small> <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Open-Meteo）</span></h2>
             <div class="data-row"><span>気温:</span> <span id="temp">-- ℃</span></div>
             <div class="data-row"><span>風速:</span> <span id="wind">-- m/s</span></div>
             <div class="data-row"><span>風向:</span> <span id="wind-dir">-- °</span></div>
@@ -429,12 +522,12 @@ lang: ja
     // データ取得時点の日付と時刻を表示する関数
     function displayFetchTime() {
         const now = new Date();
-        const options = { 
-            year: 'numeric', month: 'short', day: 'numeric', weekday: 'short',
+        const options = {
+            month: 'short', day: 'numeric', weekday: 'short',
             hour: '2-digit', minute: '2-digit'
         };
         const el = document.getElementById('current-time');
-        el.innerHTML = `データ取得日時: ${now.toLocaleString('ja-JP', options)} 🔄`;
+        el.innerHTML = `${now.toLocaleString('ja-JP', options)} 🔄 タップして更新`;
         el.onclick = () => fetchWeatherData();
     }
 
@@ -963,25 +1056,33 @@ lang: ja
             // 画面の要素にデータをセット
             if (weatherRes.status === 'fulfilled') {
                 const weatherData = weatherRes.value;
-                document.getElementById('temp').textContent = `${weatherData.current_weather.temperature} ℃`;
+                const temp = weatherData.current_weather.temperature;
+                document.getElementById('temp').textContent = `${temp} ℃`;
                 document.getElementById('wind').textContent = `${weatherData.current_weather.windspeed} m/s`;
                 document.getElementById('wind-dir').textContent = getWindDirection16(weatherData.current_weather.winddirection);
+                document.getElementById('hero-temp').textContent = temp;
             }
 
             if (marineRes.status === 'fulfilled') {
                 const marineData = marineRes.value;
                 // 波の高さ（取得できた場合）
                 if (marineData.current && marineData.current.wave_height !== null && marineData.current.wave_height !== undefined) {
-                    document.getElementById('wave-height').textContent = `${marineData.current.wave_height} m`;
+                    const wh = marineData.current.wave_height;
+                    document.getElementById('wave-height').textContent = `${wh} m`;
+                    document.getElementById('hero-wave').textContent = wh;
                 } else {
                     document.getElementById('wave-height').textContent = "データなし";
+                    document.getElementById('hero-wave').textContent = "--";
                 }
 
                 // 海水温（取得できた場合）
                 if (marineData.current && marineData.current.sea_surface_temperature !== null && marineData.current.sea_surface_temperature !== undefined) {
-                    document.getElementById('sea-temp').textContent = `${marineData.current.sea_surface_temperature} ℃`;
+                    const st = marineData.current.sea_surface_temperature;
+                    document.getElementById('sea-temp').textContent = `${st} ℃`;
+                    document.getElementById('hero-sea-temp').textContent = st;
                 } else {
                     document.getElementById('sea-temp').textContent = "データなし";
+                    document.getElementById('hero-sea-temp').textContent = "--";
                 }
             }
 
@@ -989,8 +1090,8 @@ lang: ja
                 throw new Error("Open-Meteo API の取得に失敗しました");
             }
 
-            // ローディングを消してコンテンツを表示
-            document.getElementById('loading').style.display = 'none';
+            // スケルトンを消してコンテンツを表示
+            document.getElementById('skeleton-loading').style.display = 'none';
             document.getElementById('weather-content').style.display = 'block';
 
             // 取得完了時の時刻を表示
@@ -1001,11 +1102,11 @@ lang: ja
 
         } catch (error) {
             console.error("Fetch error:", error);
-            document.getElementById('loading').style.display = 'none';
+            document.getElementById('skeleton-loading').style.display = 'none';
             document.getElementById('error').style.display = 'block';
             document.getElementById('weather-content').style.opacity = '1';
             document.getElementById('weather-content').style.pointerEvents = 'auto';
-            if (timeEl.innerHTML.includes('更新中')) {
+                if (timeEl.innerHTML.includes('更新中')) {
                 displayFetchTime();
             }
         }
