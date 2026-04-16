@@ -8,7 +8,7 @@
 - **インストール不要**: アプリのダウンロードは不要で、ブラウザから即座にアクセス可能です。
 - **レスポンシブ対応**: スマートフォンでの閲覧に最適化された、屋外でも見やすいレイアウトを採用しています。
 - **視覚的な潮汐グラフ**: Chart.jsを用いた滑らかな曲線により、満潮・干潮のタイミングを直感的に把握できます。
-- **自動データ更新**: GitHub Actionsを利用して定期的にデータを取得することで、APIの制限を回避しつつ最新の潮汐情報（tide_data.json）を配信しています。
+- **自動データ更新**: GitHub Actionsを利用して定期的にデータを取得・生成することで、APIの制限を回避しつつ、最新の天気予報（forecast_data.json）や潮汐情報（tide_data.json）を安定して配信しています。
 
 ## 使い方（WEBでの確認方法：推奨）
 
@@ -111,7 +111,7 @@ python generate_tide.py
 **3. 生成されたファイルの確認と配置**
 
 処理が完了すると、同じディレクトリ内に tidedata.json が上書き（または新規作成）されます。
-このファイルを、Webアプリのルートディレクトリ（index.html と同じ階層）に配置して更新完了です。
+このファイルを、Webアプリの `data/` ディレクトリ内に配置して更新完了です。。
 
 **補足**
 
@@ -124,5 +124,7 @@ https://www.google.com/search?q=https://www.data.jma.go.jp/kaiyou/db/tide/suisan
 - **フロントエンド**: HTML5 / CSS3 / JavaScript (ES6+)
 - **グラフ描画**: Chart.js
 - **自動化・ホスティング**: GitHub Actions / GitHub Pages
-- **気象・海洋データ**: Open-Meteo API (登録不要・無料で利用可能)
-- **潮汐データ**: Stormglass API (GitHub ActionsによりJSONとして定期更新)
+- **気象庁データ (天気予報・注意報・潮汐)**: 気象庁公式データ (GitHub ActionsによるJSON定期取得、および年次更新データを利用)
+- **月齢データ**: NASA SVS (年次更新のJSONデータを利用)
+- **海面・現在の気象データ**: Open-Meteo API (登録不要・無料で利用可能)
+- **潮汐データ (サブ)**: Stormglass API (GitHub ActionsによりJSONとして定期更新)
