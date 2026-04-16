@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://surf90.github.io/chiga-log/sitemap.xml
