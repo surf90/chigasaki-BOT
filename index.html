@@ -126,23 +126,29 @@ lang: ja
             color: #fff;
         }
         .hero-card-label {
-            font-size: 11px;
-            font-weight: 500;
-            opacity: 0.85;
+            font-size: 12px;
+            font-weight: 600;
+            opacity: 0.9;
             letter-spacing: 0.02em;
             display: block;
             margin-bottom: 4px;
+        }
+        .hero-value-group {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
         }
         .hero-card-value {
             font-size: 1.35rem;
             font-weight: 700;
             line-height: 1.1;
             letter-spacing: -0.03em;
-            display: block;
         }
         .hero-card-unit {
             font-size: 11px;
+            font-weight: 400;
             opacity: 0.8;
+            margin-left: 2px;
         }
         /* スケルトンローディング */
         @keyframes shimmer {
@@ -417,18 +423,24 @@ lang: ja
         <div class="hero-cards">
             <div class="hero-card" onclick="document.getElementById('marine-box').scrollIntoView({behavior:'smooth',block:'start'})" style="cursor:pointer;">
                 <span class="hero-card-label">🌊 波の高さ</span>
-                <span class="hero-card-value" id="hero-wave">--</span>
-                <span class="hero-card-unit">m</span>
+                <div class="hero-value-group">
+                    <span class="hero-card-value" id="hero-wave">--</span>
+                    <span class="hero-card-unit">m</span>
+                </div>
             </div>
             <div class="hero-card" onclick="document.getElementById('marine-box').scrollIntoView({behavior:'smooth',block:'start'})" style="cursor:pointer;">
                 <span class="hero-card-label">🌡 水温</span>
-                <span class="hero-card-value" id="hero-sea-temp">--</span>
-                <span class="hero-card-unit">℃</span>
+                <div class="hero-value-group">
+                    <span class="hero-card-value" id="hero-sea-temp">--</span>
+                    <span class="hero-card-unit">℃</span>
+                </div>
             </div>
             <div class="hero-card" onclick="document.getElementById('weather-current-box').scrollIntoView({behavior:'smooth',block:'start'})" style="cursor:pointer;">
                 <span class="hero-card-label">🌤 気温</span>
-                <span class="hero-card-value" id="hero-temp">--</span>
-                <span class="hero-card-unit">℃</span>
+                <div class="hero-value-group">
+                    <span class="hero-card-value" id="hero-temp">--</span>
+                    <span class="hero-card-unit">℃</span>
+                </div>
             </div>
         </div>
 
