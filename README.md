@@ -1,4 +1,4 @@
-# chigasaki-beach-weather
+# chigasaki-BOT
 
 茅ヶ崎ヘッドランド（Tバー）周辺のコンディション（天気・波情報・潮汐）を確認できるWebアプリです。
 スマートフォン（iPhone/Android）およびPCのブラウザから直接利用できます。
