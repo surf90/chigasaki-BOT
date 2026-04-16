@@ -74,14 +74,14 @@ lang: ja
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after {
             box-sizing: border-box;
         }
         body {
-            font-family: Inter, "Noto Sans JP", sans-serif;
+            /* 変更: 英数字はInter、日本語をZen Kaku Gothic Newに */
+            font-family: Inter, "Zen Kaku Gothic New", sans-serif;
             background: linear-gradient(160deg, #FFFBEB 0%, #EFF6FF 100%);
             min-height: 100vh;
             color: #222222;
@@ -102,14 +102,42 @@ lang: ja
             border-radius: 16px;
             box-shadow: 0 4px 24px rgba(0,86,120,0.10);
         }
+        /* 変更・追加: h1周りのスタイル */
         h1 {
-            font-size: 1.75rem;
-            font-weight: 600;
-            color: #0e4f6e;
             text-align: center;
             margin-top: 0;
             margin-bottom: 24px;
             line-height: 1.25;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        /* タイトルロゴ用の特別な装飾 */
+        .logo-text {
+            font-family: "Zen Kaku Gothic New", sans-serif;
+            font-weight: 900; /* 一番太くして力強く */
+            font-size: 2.1rem; /* 少し大きく */
+            letter-spacing: 0.05em; /* 文字間を少し空ける */
+            /* 海っぽいグラデーション（単色が良い場合は下の3行を消して color: #0e4f6e; にしてください） */
+            background: linear-gradient(135deg, #0e7490 0%, #0284c7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        h1 small {
+            font-size: 14px;
+            font-weight: 500;
+            color: #707070;
+            display: inline-block;
+            transform: translateY(2px); /* 少し下げるてバランス調整 */
+        }
+        
+        .title-divider {
+            color: #cbd5e1;
+            font-weight: 300;
+            font-size: 1.2rem;
         }
         /* ヒーローカード */
         .hero-cards {
@@ -396,7 +424,7 @@ lang: ja
 <body>
 
 <div class="container">
-    <h1>ちがログ | <small>茅ヶ崎の海情報</small></h1>
+    <h1><span class="logo-text">ちがログ</span> <span class="title-divider">|</span> <small>茅ヶ崎の海情報</small></h1>
     <span class="subtitle">茅ヶ崎の海を、５秒でログする。</span>
     
     <div style="overflow: hidden; margin-bottom: 4px;">
