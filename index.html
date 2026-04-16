@@ -80,7 +80,7 @@ lang: ja
         }
         body {
             font-family: Inter, "Noto Sans JP", sans-serif;
-            background-color: #1b5cb7; /* DESIGN.md: Light Blue BG */
+            background-color: #FFFBEB; /* 砂浜ホワイト */
             color: #222222;
             margin: 0;
             padding: 24px 16px;
@@ -92,7 +92,7 @@ lang: ja
         .container {
             max-width: 600px;
             margin: 0 auto;
-            background: #ffffff;
+            background: #ECFEFF; /* 淡いミント */
             padding: 32px 24px;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -114,10 +114,15 @@ lang: ja
             text-align: center; 
         }
         .weather-box {
-            background: #f7f7f7; /* DESIGN.md: Surface Light */
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.06);
             padding: 20px 24px;
             border-radius: 10px;
             margin-bottom: 16px;
+        }
+        .weather-box.warning-active {
+            background: #fff5f5;
+            border: 2px solid #c0392b;
         }
         .weather-box h2 {
             font-size: 1rem;
@@ -597,7 +602,7 @@ lang: ja
             const timeStr = dateObj.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
             
             const typeStr = item.type === 'high' ? '満潮' : '干潮';
-            const color = item.type === 'high' ? '#d9534f' : '#0275d8'; // 満潮は赤系、干潮は青系
+            const color = item.type === 'high' ? '#0275d8' : '#d9534f'; // 満潮は青系、干潮は赤系
 
             // 高さデータがあれば取得
             let heightValue = item.type === 'high' ? 1 : 0;
@@ -652,7 +657,7 @@ lang: ja
                 labels.push(pt1.timeStr);
                 dataPoints.push(pt1.height);
                 pointRadii.push(5); // 実データは点を大きく
-                pointColors.push(pt1.type === 'high' ? '#d9534f' : '#0275d8');
+                pointColors.push(pt1.type === 'high' ? '#0275d8' : '#d9534f');
 
                 // pt1 と pt2 の間をコサイン曲線で埋める
                 for (let t = pt1.timeMs + step; t < pt2.timeMs; t += step) {
@@ -673,7 +678,7 @@ lang: ja
             labels.push(lastPt.timeStr);
             dataPoints.push(lastPt.height);
             pointRadii.push(5);
-            pointColors.push(lastPt.type === 'high' ? '#d9534f' : '#0275d8');
+            pointColors.push(lastPt.type === 'high' ? '#0275d8' : '#d9534f');
         }
 
         // 以前のグラフがあれば破棄して再描画
@@ -787,9 +792,12 @@ lang: ja
                 ? chigasakiArea.warnings.filter(w => w.status !== '解除' && w.code)
                 : [];
 
+            const warningBox = document.getElementById('jma-warning-box');
             if (activeWarnings.length === 0) {
                 listEl.innerHTML = '<div class="warning-none">✅ 現在、注意報・警報はありません</div>';
+                warningBox.classList.remove('warning-active');
             } else {
+                warningBox.classList.add('warning-active');
                 // 特別警報 → 警報 → 注意報の順で表示
                 const order = { tokubetsu: 0, keiho: 1, chuiho: 2 };
                 activeWarnings.sort((a, b) => {
