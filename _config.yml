@@ -16,4 +16,4 @@ exclude:
   - DEPLOYMENT.md
   - requirements.txt
 
-# google_analytics: G-XXXXXXXXXX  # GA4 IDが確定次第ここに追記
+google_analytics: G-L922RQ9G6R
