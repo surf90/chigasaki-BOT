@@ -314,7 +314,7 @@ lang: ja
 
 <div class="container">
     <h1>ちがさきBOT(beta)</h1>
-    <span class="subtitle">茅ヶ崎の潮汐・天気・注意報などを自動収集します。</span>
+    <span class="subtitle">茅ヶ崎の潮汐・波・水温・天気・注意報を表示します。</span>
     
     <div id="current-time" class="current-time"></div>
     
@@ -337,14 +337,14 @@ lang: ja
         </div>
 
         <div class="weather-box">
-            <h2>海面コンディション <small>(予測)</small> <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Open-Meteo）</span></h2>
+            <h2>海面状況 <small>(予測)</small> <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（Open-Meteo）</span></h2>
             <div class="data-row"><span>波の高さ:</span> <span id="wave-height">-- m</span></div>
             <div class="data-row"><span>海水温:</span> <span id="sea-temp">-- ℃</span></div>
             <p class="note">※波と海水温のデータは沖合の予測値ベースです。</p>
         </div>
 
         <div class="weather-box" id="jma-forecast-box">
-            <h2>今日の天気予報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（気象庁）</span></h2>
+            <h2>天気予報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（気象庁）</span></h2>
             <div id="jma-loading" style="color:#707070; font-size:14px;">取得中...</div>
             <div id="jma-forecast-content" style="display:none;">
                 <div class="data-row"><span>天気:</span> <span id="jma-weather">--</span></div>
