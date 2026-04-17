@@ -1154,8 +1154,8 @@ lang: ja
     async function fetchWaveGuidance() {
         try {
             const hour3Buster = Math.floor(Date.now() / (3 * 60 * 60 * 1000));
-            const resp = await fetch(`data/wave_guid_19.json?t=${hour3Buster}`);
-            if (!resp.ok) throw new Error('wave_guid_19.json の読み込みに失敗');
+            const resp = await fetch(`data/wave_guid_20.json?t=${hour3Buster}`);
+            if (!resp.ok) throw new Error('wave_guid_20.json の読み込みに失敗');
             const json = await resp.json();
 
             // 今日（JST）のデータに絞る

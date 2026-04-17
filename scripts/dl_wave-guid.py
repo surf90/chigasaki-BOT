@@ -6,7 +6,9 @@ import urllib.request
 from datetime import datetime, timezone, timedelta
 
 JST = timezone(timedelta(hours=9))
-URL = "https://www.data.jma.go.jp/waveinf/data/Guid/csv/wave_guid_19.csv"
+# 注: 気象庁サイト側の不具合により wave_guid.html?area=19 がエリア20（関東地方南部）のデータを配信している。
+# 正しいエリアコードは20のため、CSVは wave_guid_20.csv を使用する。
+URL = "https://www.data.jma.go.jp/waveinf/data/Guid/csv/wave_guid_20.csv"
 
 
 def fetch_csv(url: str) -> str:
@@ -54,7 +56,7 @@ def main() -> None:
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     data_dir = os.path.join(repo_root, "data")
     os.makedirs(data_dir, exist_ok=True)
-    output_path = os.path.join(data_dir, "wave_guid_19.json")
+    output_path = os.path.join(data_dir, "wave_guid_20.json")
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
     print(f"保存完了: {output_path}（{len(data)}件）")

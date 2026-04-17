@@ -24,5 +24,5 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add data/wave_guid_19.json
+          git add data/wave_guid_20.json
           git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update wave guidance data" && git push)
