@@ -284,10 +284,14 @@ function drawTideChart(extremes, hasHeightData) {
                         callback(value, index) {
                             const label = this.getLabelForValue(value);
                             if (!label) return null;
-                            if (index === 0) return label;
+                            
+                            // 最初のラベル（時刻そのまま表示）の先頭が0なら取り除く (例: "04:30" -> "4:30")
+                            if (index === 0) return label.replace(/^0/, '');
+                            
                             const parts = label.split(':');
                             if (parts.length < 2) return null;
                             const hour = parseInt(parts[0], 10);
+                            
                             if (hour % 4 === 0) {
                                 const prevLabel = this.getLabelForValue(value - 1);
                                 if (!prevLabel) return null;
@@ -296,7 +300,9 @@ function drawTideChart(extremes, hasHeightData) {
                                     let diff = Math.abs(hour - firstHour);
                                     if (diff > 12) diff = 24 - diff;
                                     if (diff < 2) return null;
-                                    return ('0' + hour).slice(-2) + ':00';
+                                    
+                                    // 修正: ゼロ埋めを解除 (例: "04:00" -> "4:00")
+                                    return hour + ':00';
                                 }
                             }
                             return null;
