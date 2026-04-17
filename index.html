@@ -1191,7 +1191,7 @@ lang: ja
         // 今日JST 0:00 のタイムスタンプ（ms）
         const jstOffsetMs = 9 * 60 * 60 * 1000;
         const todayJstStartMs = Math.floor((Date.now() + jstOffsetMs) / 86400000) * 86400000 - jstOffsetMs;
-        const xMin = todayJstStartMs;
+        const xMin = todayJstStartMs + 4 * 60 * 60 * 1000;
         const xMax = todayJstStartMs + 24 * 60 * 60 * 1000;
         const h4ms = 4 * 60 * 60 * 1000;
 
