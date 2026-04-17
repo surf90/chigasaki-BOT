@@ -2,8 +2,8 @@ name: Fetch JMA Forecast
 
 on:
   schedule:
-    # JST 4:00, 10:00, 16:00, 22:00 -> UTC 19:00, 1:00, 7:00, 13:00
-    - cron: '0 19,1,7,13 * * *'
+    # JST 5:05, 11:05, 17:05 -> UTC 20:05, 2:05, 8:05
+    - cron: '5 20,2,8 * * *'
   workflow_dispatch:
 
 permissions:
