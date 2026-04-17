@@ -1,0 +1,31 @@
+name: Update Daily Data
+
+on:
+  schedule:
+    # 毎日 JST 0:10 (UTC 15:10) に実行
+    - cron: '10 15 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-daily:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Extract today's moon & tide data
+        run: python scripts/extract_daily_data.py
+
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add data/moon_today.json data/tide_today.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update daily moon & tide data" && git push)
