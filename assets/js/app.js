@@ -629,7 +629,15 @@ async function fetchWeatherData() {
         timeEl.innerHTML = 'データを更新中... ⏳';
         document.getElementById('weather-content').style.opacity      = '0.5';
         document.getElementById('weather-content').style.pointerEvents = 'none';
-        document.querySelector('h1').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        (function smoothTop() {
+            const start = window.scrollY, t0 = performance.now();
+            function step(t) {
+                const p = Math.min((t - t0) / 500, 1);
+                window.scrollTo(0, start * (1 - p * p * (3 - 2 * p)));
+                if (p < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        })();
     }
     try {
         await calculateTide();
