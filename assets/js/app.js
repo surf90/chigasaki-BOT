@@ -629,7 +629,7 @@ async function fetchWeatherData() {
         timeEl.innerHTML = 'データを更新中... ⏳';
         document.getElementById('weather-content').style.opacity      = '0.5';
         document.getElementById('weather-content').style.pointerEvents = 'none';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.querySelector('h1').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     try {
         await calculateTide();
