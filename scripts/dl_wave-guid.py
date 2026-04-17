@@ -51,8 +51,10 @@ def main() -> None:
         "area": 19,
         "data": data,
     }
-    os.makedirs("data", exist_ok=True)
-    output_path = "data/wave_guid_19.json"
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(repo_root, "data")
+    os.makedirs(data_dir, exist_ok=True)
+    output_path = os.path.join(data_dir, "wave_guid_19.json")
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
     print(f"保存完了: {output_path}（{len(data)}件）")
