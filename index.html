@@ -1157,7 +1157,14 @@ lang: ja
             const todayJst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
             const todayStr = `${todayJst.getFullYear()}-${String(todayJst.getMonth()+1).padStart(2,'0')}-${String(todayJst.getDate()).padStart(2,'0')}`;
 
-            const todayData = (json.data || []).filter(d => d.time.startsWith(todayStr));
+            // 翌日の日付文字列（24:00 = 翌日00:00 のデータを含めるため）
+            const tomorrowJst = new Date(todayJst);
+            tomorrowJst.setDate(tomorrowJst.getDate() + 1);
+            const tomorrowStr = `${tomorrowJst.getFullYear()}-${String(tomorrowJst.getMonth()+1).padStart(2,'0')}-${String(tomorrowJst.getDate()).padStart(2,'0')}`;
+
+            const todayData = (json.data || []).filter(d =>
+                d.time.startsWith(todayStr) || d.time.startsWith(tomorrowStr + 'T00:00')
+            );
             if (todayData.length === 0) throw new Error('本日の波浪データがありません');
 
             waveChartInstance = drawWaveCombinedChart('waveChart', waveChartInstance, todayData);
@@ -1228,11 +1235,7 @@ lang: ja
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: { boxWidth: 12, font: { size: 11 } }
-                    },
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: function(ctx) {
