@@ -448,7 +448,7 @@ lang: ja
 
     <div id="weather-content" style="display: none;">
         <div class="hero-cards">
-            <div class="hero-card" onclick="document.getElementById('marine-box').scrollIntoView({behavior:'smooth',block:'start'})" style="cursor:pointer;">
+            <div class="hero-card" onclick="document.getElementById('wave-guid-box').scrollIntoView({behavior:'smooth',block:'start'})" style="cursor:pointer;">
                 <span class="hero-card-label">🌊 波の高さ</span>
                 <div class="hero-value-group">
                     <span class="hero-card-value" id="hero-wave">--</span>
@@ -1169,6 +1169,11 @@ lang: ja
 
             waveChartInstance = drawWaveCombinedChart('waveChart', waveChartInstance, todayData);
 
+            // 現在時刻以前で最も新しいデータ点の最大波高をヒーローカードに表示
+            const nowMs = Date.now();
+            const current = todayData.filter(d => new Date(d.time).getTime() <= nowMs).pop();
+            document.getElementById('hero-wave').textContent = current ? current.wave_height.toFixed(1) : '--';
+
             document.getElementById('wave-guid-loading').style.display = 'none';
             document.getElementById('wave-guid-content').style.display = 'block';
         } catch (e) {
@@ -1334,12 +1339,9 @@ lang: ja
                 const marineData = marineRes.value;
                 // 波の高さ（取得できた場合）
                 if (marineData.current && marineData.current.wave_height !== null && marineData.current.wave_height !== undefined) {
-                    const wh = marineData.current.wave_height;
-                    document.getElementById('wave-height').textContent = `${wh} m`;
-                    document.getElementById('hero-wave').textContent = wh;
+                    document.getElementById('wave-height').textContent = `${marineData.current.wave_height} m`;
                 } else {
                     document.getElementById('wave-height').textContent = "データなし";
-                    document.getElementById('hero-wave').textContent = "--";
                 }
 
                 // 海水温（取得できた場合）
