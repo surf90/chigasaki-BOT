@@ -1238,6 +1238,13 @@ lang: ja
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
+                            title: function(items) {
+                                if (!items.length) return '';
+                                const ms = items[0].parsed.x;
+                                const jstHour = (new Date(ms).getUTCHours() + 9) % 24;
+                                const jstMin = new Date(ms).getUTCMinutes();
+                                return String(jstHour).padStart(2, '0') + ':' + String(jstMin).padStart(2, '0');
+                            },
                             label: function(ctx) {
                                 if (ctx.dataset.yAxisID === 'yWave') {
                                     return `最大波高: ${ctx.parsed.y.toFixed(1)} m`;
