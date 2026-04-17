@@ -12,6 +12,8 @@ body {
     line-height: 1.7;
     word-break: break-all;
     overflow-wrap: break-word;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
 }
 .container {
     max-width: 600px;

@@ -29,14 +29,14 @@ lang: ja
     <meta property="og:locale"    content="ja_JP">
     <meta property="og:site_name" content="ちがログ">
     <meta property="fb:app_id"    content="1225249939823906">
-    <meta property="og:image"     content="{{ site.url }}{{ site.baseurl }}/ogp.png">
+    <meta property="og:image"     content="{{ site.url }}{{ site.baseurl }}/ogp.webp">
     <meta property="og:image:width"  content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt"    content="ちがログ OGP画像">
 
     <meta name="twitter:title"       content="{{ page.title }} | ちがログ">
     <meta name="twitter:description" content="{{ page.description }}">
-    <meta name="twitter:image"       content="{{ site.url }}{{ site.baseurl }}/ogp.png">
+    <meta name="twitter:image"       content="{{ site.url }}{{ site.baseurl }}/ogp.webp">
 
     <script type="application/ld+json">
     {
@@ -74,12 +74,16 @@ lang: ja
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Inter + Zen Kaku 本文用（400,700のみ） -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Zen Kaku 900：ロゴ文字のみサブセット -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@900&text=ちがログ&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/style.css">
+    <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/style.min.css">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
-    <script src="{{ site.baseurl }}/assets/js/app.js" defer></script>
+    <script src="{{ site.baseurl }}/assets/js/app.min.js" defer></script>
 </head>
 <body>
 

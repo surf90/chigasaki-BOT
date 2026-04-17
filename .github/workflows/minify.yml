@@ -1,0 +1,47 @@
+name: Minify CSS and JS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/css/style.css'
+      - 'assets/js/app.js'
+
+jobs:
+  minify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install minify tools
+        run: pip install csscompressor jsmin
+
+      - name: Minify CSS
+        run: |
+          python -c "
+          import csscompressor, pathlib
+          src = pathlib.Path('assets/css/style.css').read_text(encoding='utf-8')
+          out = csscompressor.compress(src)
+          pathlib.Path('assets/css/style.min.css').write_text(out, encoding='utf-8')
+          print(f'CSS: {len(src)} -> {len(out)} bytes')
+          "
+
+      - name: Minify JS
+        run: |
+          python -c "
+          import jsmin, pathlib
+          src = pathlib.Path('assets/js/app.js').read_text(encoding='utf-8')
+          out = jsmin.jsmin(src)
+          pathlib.Path('assets/js/app.min.js').write_text(out, encoding='utf-8')
+          print(f'JS: {len(src)} -> {len(out)} bytes')
+          "
+
+      - name: Commit minified files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add assets/css/style.min.css assets/js/app.min.js
+          git diff --cached --quiet || git commit -m "chore: minify CSS and JS [skip ci]"
+          git push
