@@ -553,30 +553,35 @@ function drawWaveCombinedChart(canvasId, existingInstance, data) {
                     },
                     grid: { display: false }
                 },
-                yWave: {
+yWave: {
                     type: 'linear', position: 'left',
                     title: { display: false },
                     ticks: { 
-                        // 【追加】ラベルとY軸の隙間を最小限（2px）にする
                         padding: 0,
                         maxTicksLimit: 4, 
                         callback: v => v.toFixed(1) 
                     },
-                    grid: { color: 'rgba(0,0,0,0.05)' }
+                    grid: { 
+                        color: 'rgba(0,0,0,0.05)',
+                        drawTicks: false, // 【追加】目盛り線を非表示にする
+                        tickLength: 0     // 【追加】念のため長さを0に
+                    }
                 },
                 yPeriod: {
                     type: 'linear', position: 'right',
                     title: { display: false },
                     ticks: { 
-                        // 【追加】ラベルとY軸の隙間を最小限（2px）にする
                         padding: 0,
                         maxTicksLimit: 4,
                         stepSize: 1, 
                         callback: v => Number.isInteger(v) ? v : null 
                     },
-                    grid: { display: false }
+                    grid: { 
+                        display: false,
+                        drawTicks: false, // 【追加】目盛り線を非表示にする
+                        tickLength: 0     // 【追加】念のため長さを0に
+                    }
                 }
-            }
         }
     });
 
