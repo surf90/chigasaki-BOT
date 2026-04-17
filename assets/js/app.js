@@ -517,7 +517,7 @@ function drawWaveCombinedChart(canvasId, existingInstance, data) {
                     top: 0,
                     left: 0,
                     right: 0,
-                    bottom: 12 // 1枚目と同じくらいになるよう微調整
+                    bottom: 24 // 1枚目と同じくらいになるよう微調整
                 }
             },
             interaction: { mode: 'index', intersect: false },
