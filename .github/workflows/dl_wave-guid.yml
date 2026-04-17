@@ -2,8 +2,8 @@ name: Fetch JMA Wave Guidance
 
 on:
   schedule:
-    # JST 9:00, 17:00, 翌1:00 -> UTC 0:00, 8:00, 16:00
-    - cron: '0 0,8,16 * * *'
+    # JST 9:05, 15:05, 21:05 -> UTC 0:05, 6:05, 12:05
+    - cron: '5 0,6,12 * * *'
   workflow_dispatch:
 
 permissions:
