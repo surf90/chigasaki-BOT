@@ -491,7 +491,8 @@ function drawWaveCombinedChart(canvasId, existingInstance, data) {
         data: {
             datasets: [
                 {
-                    label: '最大波高',
+                    // 【修正】単位を追加
+                    label: '最大波高 [m]',
                     data: heightData,
                     borderColor: '#0275d8', backgroundColor: '#0275d826',
                     borderWidth: 2, pointRadius: 3,
@@ -499,7 +500,8 @@ function drawWaveCombinedChart(canvasId, existingInstance, data) {
                     pointHoverRadius: 6, fill: true, tension: 0.3, yAxisID: 'yWave',
                 },
                 {
-                    label: '周期',
+                    // 【修正】単位を追加
+                    label: '周期 [秒]',
                     data: periodData,
                     borderColor: '#27ae60', backgroundColor: 'transparent',
                     borderWidth: 2, pointRadius: 3,
@@ -513,14 +515,28 @@ function drawWaveCombinedChart(canvasId, existingInstance, data) {
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
-                // 【追加】凡例をグラフ内に表示
                 legend: { 
                     display: true,
                     position: 'top',
-                    align: 'end', // 右上に配置
+                    align: 'end',
                     labels: {
-                        boxWidth: 12,
-                        usePointStyle: true // 丸いアイコンで表示
+                        // 【修正】アイコンを小さく、モダンな円形に設定
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        boxWidth: 8,
+                        boxHeight: 8,
+                        font: {
+                            size: 11,
+                            weight: '500'
+                        },
+                        // 【修正】凡例の文字色をグラフの線の色に合わせる
+                        generateLabels: function(chart) {
+                            const original = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                            original.forEach(label => {
+                                label.fontColor = label.strokeStyle; 
+                            });
+                            return original;
+                        }
                     }
                 },
                 tooltip: {
@@ -555,10 +571,8 @@ function drawWaveCombinedChart(canvasId, existingInstance, data) {
                 },
                 yWave: {
                     type: 'linear', position: 'left',
-                    // 【変更】Y軸タイトルを非表示
                     title: { display: false },
                     ticks: { 
-                        // 【変更】mirror: true を削除して外側配置に戻す
                         maxTicksLimit: 4, 
                         callback: v => v.toFixed(1) 
                     },
@@ -566,10 +580,8 @@ function drawWaveCombinedChart(canvasId, existingInstance, data) {
                 },
                 yPeriod: {
                     type: 'linear', position: 'right',
-                    // 【変更】Y軸タイトルを非表示
                     title: { display: false },
                     ticks: { 
-                        // 【変更】mirror: true を削除して外側配置に戻す
                         maxTicksLimit: 4,
                         stepSize: 1, 
                         callback: v => Number.isInteger(v) ? v : null 
