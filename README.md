@@ -140,7 +140,7 @@ python generate_tide.py
 
 データの取得元: 気象庁 潮汐観測資料（江の島）
 
-https://www.google.com/search?q=https://www.data.jma.go.jp/kaiyou/db/tide/suisan/txt/
+https://www.data.jma.go.jp/kaiyou/db/tide/suisan/txt/
 
 </details>
 
