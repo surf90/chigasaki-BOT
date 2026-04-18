@@ -1,17 +1,35 @@
 const LAT = 35.3175;
 const LON = 139.4151;
 
-// Open-Meteo レスポンスをセッション内で30分キャッシュするヘルパー
+// セッション内キャッシュヘルパー（sessionStorage）
 async function fetchWithCache(url, cacheKey, ttlMs = 30 * 60 * 1000) {
     const cached = sessionStorage.getItem(cacheKey);
     if (cached) {
-        const { data, ts } = JSON.parse(cached);
-        if (Date.now() - ts < ttlMs) return data;
+        try {
+            const { data, ts } = JSON.parse(cached);
+            if (Date.now() - ts < ttlMs) return data;
+        } catch { sessionStorage.removeItem(cacheKey); }
     }
     const res = await fetch(url);
     if (!res.ok) throw new Error(`fetch failed: ${url}`);
     const data = await res.json();
     sessionStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() }));
+    return data;
+}
+
+// 長期キャッシュヘルパー（localStorage）
+async function fetchWithLocalCache(url, cacheKey, ttlMs) {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+        try {
+            const { data, ts } = JSON.parse(cached);
+            if (Date.now() - ts < ttlMs) return data;
+        } catch { localStorage.removeItem(cacheKey); }
+    }
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`fetch failed: ${url}`);
+    const data = await res.json();
+    localStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() }));
     return data;
 }
 
@@ -349,12 +367,9 @@ const WARNING_CODE_MAP = {
 };
 
 async function fetchJmaWarning() {
-    const secBuster = Math.floor(Date.now() / 1000);
-    const warningUrl = `https://www.jma.go.jp/bosai/warning/data/warning/140000.json?t=${secBuster}`;
+    const warningUrl = 'https://www.jma.go.jp/bosai/warning/data/warning/140000.json';
     try {
-        const res = await fetch(warningUrl);
-        if (!res.ok) throw new Error('JMA warning fetch failed');
-        const data = await res.json();
+        const data = await fetchWithLocalCache(warningUrl, 'cache_jma_warning', 10 * 60 * 1000);
 
         const cityAreas = data.areaTypes?.[1]?.areas ?? [];
         const chigasakiArea = cityAreas.find(a => a.code === '1420700');
@@ -620,6 +635,8 @@ yWave: {
 }
 
 async function fetchWeatherData() {
+    if (_isFetching) return;
+    _isFetching = true;
     const timeEl = document.getElementById('current-time');
     if (timeEl.innerHTML !== '') {
         timeEl.innerHTML = 'データを更新中... ⏳';
@@ -637,16 +654,22 @@ async function fetchWeatherData() {
     }
     try {
         await calculateTide();
-        fetchTideExtremes();
-        fetchJmaForecast();
-        fetchJmaWarning();
-        fetchWaveGuidance();
+        await Promise.allSettled([
+            fetchTideExtremes(),
+            fetchJmaForecast(),
+            fetchJmaWarning(),
+            fetchWaveGuidance(),
+        ]);
 
         // Open-Meteo はセッション内30分キャッシュ
-        const [weatherData, marineData] = await Promise.all([
+        const [weatherResult, marineResult] = await Promise.allSettled([
             fetchWithCache(weatherUrl, 'cache_weather'),
             fetchWithCache(marineUrl,  'cache_marine'),
         ]);
+        if (weatherResult.status === 'rejected') throw weatherResult.reason;
+        if (marineResult.status  === 'rejected') throw marineResult.reason;
+        const weatherData = weatherResult.value;
+        const marineData  = marineResult.value;
 
         const temp = weatherData.current_weather.temperature;
         document.getElementById('temp').textContent     = `${temp}℃`;
@@ -680,9 +703,12 @@ async function fetchWeatherData() {
         document.getElementById('weather-content').style.opacity      = '1';
         document.getElementById('weather-content').style.pointerEvents = 'auto';
         if (timeEl.innerHTML.includes('更新中')) displayFetchTime();
+    } finally {
+        _isFetching = false;
     }
 }
 
+let _isFetching    = false;
 let _toastShown    = false;
 let _lastFetchTime = Date.now();
 
@@ -706,7 +732,7 @@ function _onUserInteraction() {
 }
 ['click', 'touchstart'].forEach(ev => document.addEventListener(ev, _onUserInteraction));
 
-window.onload = () => {
+document.addEventListener('DOMContentLoaded', () => {
     fetchWeatherData();
     setInterval(fetchWeatherData, 3 * 60 * 60 * 1000);
-};
+});
