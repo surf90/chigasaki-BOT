@@ -459,10 +459,6 @@ async function fetchWaveGuidance() {
 
         waveChartInstance = drawWaveCombinedChart('waveChart', waveChartInstance, todayData);
 
-        const nowMs   = Date.now();
-        const current = todayData.filter(d => new Date(d.time).getTime() <= nowMs).pop();
-        document.getElementById('hero-wave').textContent = current ? current.wave_height.toFixed(1) : '--';
-
         document.getElementById('wave-guid-loading').style.display = 'none';
         document.getElementById('wave-guid-content').style.display = 'block';
     } catch (e) {
