@@ -1,4 +1,21 @@
 const LAT = 35.3175;
+
+const nowLinePlugin = {
+  id: 'nowLine',
+  afterDraw(chart) {
+    const now = Date.now();
+    const xScale = chart.scales.x;
+    if (now < xScale.min || now > xScale.max) return;
+    const x = xScale.getPixelForValue(now);
+    const ctx = chart.ctx;
+    const { top, bottom } = chart.chartArea;
+    ctx.save();
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = '#ff6600';
+    ctx.fillRect(x - 3, top, 6, bottom - top);
+    ctx.restore();
+  }
+};
 const LON = 139.4151;
 
 // セッション内キャッシュヘルパー（sessionStorage）
@@ -362,6 +379,7 @@ function drawTideChart(extremes, hasHeightData) {
 
     tideChartInstance = new Chart(ctx, {
         type: 'line',
+        plugins: [nowLinePlugin],
         data: {
             datasets: [{
                 label: hasHeightData ? '潮位 (m)' : '潮位イメージ',
@@ -595,23 +613,24 @@ function drawWaveCombinedChart(canvasId, existingInstance, data) {
     const ctx   = waveCanvas.getContext('2d');
     const chart = new Chart(ctx, {
         type: 'line',
+        plugins: [nowLinePlugin],
         data: {
             datasets: [
                 {
                     label: '最大波高 [m]',
                     data: heightData,
                     borderColor: '#0275d8', backgroundColor: '#0275d826',
-                    borderWidth: 2, pointRadius: 3,
+                    borderWidth: 2, pointRadius: 5,
                     pointBackgroundColor: '#0275d8', pointBorderColor: '#fff',
-                    pointHoverRadius: 6, fill: true, tension: 0.3, yAxisID: 'yWave',
+                    pointHoverRadius: 7, fill: true, tension: 0.3, yAxisID: 'yWave',
                 },
                 {
                     label: '周期 [秒]',
                     data: periodData,
                     borderColor: '#27ae60', backgroundColor: 'transparent',
-                    borderWidth: 2, pointRadius: 3,
+                    borderWidth: 2, pointRadius: 5,
                     pointBackgroundColor: '#27ae60', pointBorderColor: '#fff',
-                    pointHoverRadius: 6, fill: false, tension: 0.3, yAxisID: 'yPeriod',
+                    pointHoverRadius: 7, fill: false, tension: 0.3, yAxisID: 'yPeriod',
                 }
             ]
         },
