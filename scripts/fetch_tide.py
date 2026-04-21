@@ -16,7 +16,8 @@ if not API_KEY:
 JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 now_jst = datetime.datetime.now(JST)
 start_jst = now_jst.replace(hour=0, minute=0, second=0, microsecond=0)
-end_jst = now_jst.replace(hour=23, minute=59, second=59, microsecond=0)
+# 2日後（今日を含めて3日分）の23:59まで取得する
+end_jst = now_jst.replace(hour=23, minute=59, second=59, microsecond=0) + datetime.timedelta(days=2)
 
 # 確実な通信のため、日付文字列ではなくUNIXタイムスタンプ（数値）に変換
 start_timestamp = int(start_jst.timestamp())
