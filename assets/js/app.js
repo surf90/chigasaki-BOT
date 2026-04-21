@@ -130,7 +130,25 @@ async function fetchTideExtremes() {
     const now = new Date();
     const dayKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 
-    // STEP 1: 気象庁 当日JSONを試す（数百バイト）
+    // STEP 1: 3日分JSON（tide_3day.json）を優先
+    try {
+        const res = await fetch(`data/tide_3day.json?d=${dayKey}`);
+        if (res.ok) {
+            const data3 = await res.json();
+            if (data3.days && data3.days.length > 0 && data3.days[0].date === dayKey) {
+                const all = data3.days.flatMap(d => d.tides);
+                if (all.length > 0) {
+                    displayTideData(all);
+                    updateTideSource("気象庁");
+                    return;
+                }
+            }
+        }
+    } catch (e) {
+        console.warn("tide_3day.json 取得失敗 -> tide_today.jsonへフォールバック");
+    }
+
+    // STEP 1b: 当日JSONにフォールバック
     try {
         const res = await fetch(`data/tide_today.json?d=${dayKey}`);
         if (res.ok) {
@@ -223,46 +241,115 @@ function displayTideData(extremes) {
     drawTideChart(chartDataPoints, hasHeightData);
 }
 
+// 両グラフで共有するx軸範囲と幅
+let chartXMin = null;
+const CHART_DAYS = 3;
+const PX_PER_HOUR = 40;
+const CHART_TOTAL_PX = PX_PER_HOUR * 24 * CHART_DAYS;
+let chartScrollSynced = false;
+
+function buildChartXTicks(xMin, xMax) {
+    const h4ms = 4 * 60 * 60 * 1000;
+    const jstOffsetMs = 9 * 60 * 60 * 1000;
+    const ticks = [{ value: xMin }];
+    // xMin の次の4時間境界（JST基準）を計算
+    const xMinJst = xMin + jstOffsetMs;
+    const firstBoundary = Math.ceil(xMinJst / h4ms) * h4ms - jstOffsetMs;
+    for (let t = firstBoundary; t <= xMax; t += h4ms) {
+        if (t > xMin + 60000) ticks.push({ value: t });
+    }
+    return ticks;
+}
+
+function chartXTickCallback(value, index) {
+    const jstH = (new Date(value).getUTCHours() + 9) % 24;
+    const jstM = new Date(value).getUTCMinutes();
+    if (index === 0) return jstM === 0 ? jstH + ':00' : jstH + ':' + String(jstM).padStart(2, '0');
+    return jstH + ':00';
+}
+
+function setChartContainerWidth(containerId, px) {
+    const el = document.getElementById(containerId);
+    if (el) el.style.width = px + 'px';
+}
+
+function syncChartScroll() {
+    if (chartScrollSynced) return;
+    chartScrollSynced = true;
+    const tideScroll = document.getElementById('tide-chart-scroll');
+    const waveScroll = document.getElementById('wave-chart-scroll');
+    if (!tideScroll || !waveScroll) return;
+    let syncing = false;
+    tideScroll.addEventListener('scroll', () => {
+        if (syncing) return; syncing = true;
+        waveScroll.scrollLeft = tideScroll.scrollLeft;
+        syncing = false;
+    });
+    waveScroll.addEventListener('scroll', () => {
+        if (syncing) return; syncing = true;
+        tideScroll.scrollLeft = waveScroll.scrollLeft;
+        syncing = false;
+    });
+}
+
+function scrollChartsToNow() {
+    if (chartXMin === null) return;
+    const nowMs = Date.now();
+    const pxPerMs = PX_PER_HOUR / (60 * 60 * 1000);
+    const scrollLeft = Math.max(0, (nowMs - chartXMin) * pxPerMs - 80);
+    const tideScroll = document.getElementById('tide-chart-scroll');
+    const waveScroll = document.getElementById('wave-chart-scroll');
+    if (tideScroll) tideScroll.scrollLeft = scrollLeft;
+    if (waveScroll) waveScroll.scrollLeft = scrollLeft;
+}
+
 function drawTideChart(extremes, hasHeightData) {
     if (window.Chart) Chart.defaults.font.family = 'Inter, "Zen Kaku Gothic New", sans-serif';
 
     document.getElementById('tide-chart-container').style.display = 'block';
-    const ctx = document.getElementById('tideChart').getContext('2d');
+    setChartContainerWidth('tide-chart-container', CHART_TOTAL_PX);
+
+    const canvas = document.getElementById('tideChart');
+    canvas.width  = CHART_TOTAL_PX;
+    canvas.height = 160;
+    const ctx = canvas.getContext('2d');
 
     extremes.sort((a, b) => a.timeMs - b.timeMs);
 
-    const labels = [], dataPoints = [], pointRadii = [], pointColors = [];
+    // xMin = 最初の極値時刻、xMax = xMin + 3日
+    chartXMin = extremes[0].timeMs;
+    const xMax = chartXMin + CHART_DAYS * 24 * 60 * 60 * 1000;
+
+    const dataPoints = [], pointRadii = [], pointColors = [];
 
     if (extremes.length >= 2) {
         const step = 30 * 60 * 1000;
         for (let i = 0; i < extremes.length - 1; i++) {
             const pt1 = extremes[i], pt2 = extremes[i + 1];
-            labels.push(pt1.timeStr);
-            dataPoints.push(pt1.height);
+            dataPoints.push({ x: pt1.timeMs, y: pt1.height });
             pointRadii.push(5);
             pointColors.push(pt1.type === 'high' ? '#0275d8' : '#d9534f');
             for (let t = pt1.timeMs + step; t < pt2.timeMs; t += step) {
-                const norm  = (t - pt1.timeMs) / (pt2.timeMs - pt1.timeMs);
-                const cosV  = (1 - Math.cos(Math.PI * norm)) / 2;
-                labels.push(new Date(t).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }));
-                dataPoints.push(pt1.height + (pt2.height - pt1.height) * cosV);
+                const norm = (t - pt1.timeMs) / (pt2.timeMs - pt1.timeMs);
+                const cosV = (1 - Math.cos(Math.PI * norm)) / 2;
+                dataPoints.push({ x: t, y: pt1.height + (pt2.height - pt1.height) * cosV });
                 pointRadii.push(0);
                 pointColors.push('#0056b3');
             }
         }
         const last = extremes[extremes.length - 1];
-        labels.push(last.timeStr);
-        dataPoints.push(last.height);
+        dataPoints.push({ x: last.timeMs, y: last.height });
         pointRadii.push(5);
         pointColors.push(last.type === 'high' ? '#0275d8' : '#d9534f');
     }
 
     if (tideChartInstance) tideChartInstance.destroy();
 
+    const xTicks = buildChartXTicks(chartXMin, xMax);
+
     tideChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            labels,
             datasets: [{
                 label: hasHeightData ? '潮位 (m)' : '潮位イメージ',
                 data: dataPoints,
@@ -278,12 +365,19 @@ function drawTideChart(extremes, hasHeightData) {
             }]
         },
         options: {
-            responsive: true,
+            responsive: false,
             maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
                 tooltip: {
                     callbacks: {
+                        title(items) {
+                            if (!items.length) return '';
+                            const ms = items[0].parsed.x;
+                            const h = (new Date(ms).getUTCHours() + 9) % 24;
+                            const m = new Date(ms).getUTCMinutes();
+                            return h + ':' + String(m).padStart(2, '0');
+                        },
                         label: ctx => hasHeightData ? ctx.parsed.y.toFixed(2) + ' m' : '潮位イメージ'
                     }
                 }
@@ -291,46 +385,22 @@ function drawTideChart(extremes, hasHeightData) {
             scales: {
                 y: {
                     display: hasHeightData,
-                    suggestedMin: hasHeightData ? Math.min(...dataPoints) - 0.2 : -0.2,
-                    suggestedMax: hasHeightData ? Math.max(...dataPoints) + 0.2 :  1.2,
+                    suggestedMin: hasHeightData ? Math.min(...dataPoints.map(d => d.y)) - 0.2 : -0.2,
+                    suggestedMax: hasHeightData ? Math.max(...dataPoints.map(d => d.y)) + 0.2 :  1.2,
                     ticks: { callback: v => v.toFixed(1) + ' m' }
                 },
                 x: {
-                    ticks: {
-                        autoSkip: false,
-                        maxRotation: 0,
-                        callback(value, index) {
-                            const label = this.getLabelForValue(value);
-                            if (!label) return null;
-                            
-                            // 最初のラベル（時刻そのまま表示）の先頭が0なら取り除く (例: "04:30" -> "4:30")
-                            if (index === 0) return label.replace(/^0/, '');
-                            
-                            const parts = label.split(':');
-                            if (parts.length < 2) return null;
-                            const hour = parseInt(parts[0], 10);
-                            
-                            if (hour % 4 === 0) {
-                                const prevLabel = this.getLabelForValue(value - 1);
-                                if (!prevLabel) return null;
-                                if (hour !== parseInt(prevLabel.split(':')[0], 10)) {
-                                    const firstHour = parseInt(this.getLabelForValue(0).split(':')[0], 10);
-                                    let diff = Math.abs(hour - firstHour);
-                                    if (diff > 12) diff = 24 - diff;
-                                    if (diff < 2) return null;
-                                    
-                                    // 修正: ゼロ埋めを解除 (例: "04:00" -> "4:00")
-                                    return hour + ':00';
-                                }
-                            }
-                            return null;
-                        }
-                    },
+                    type: 'linear', min: chartXMin, max: xMax,
+                    afterBuildTicks(axis) { axis.ticks = xTicks; },
+                    ticks: { maxRotation: 0, callback: chartXTickCallback },
                     grid: { display: false }
                 }
             }
         }
     });
+
+    syncChartScroll();
+    scrollChartsToNow();
 }
 
 const WARNING_CODE_MAP = {
@@ -462,13 +532,19 @@ async function fetchWaveGuidance() {
 
         const now      = new Date();
         const todayJst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
-        const todayStr = `${todayJst.getFullYear()}-${String(todayJst.getMonth()+1).padStart(2,'0')}-${String(todayJst.getDate()).padStart(2,'0')}`;
-        const tomorrowJst = new Date(todayJst);
-        tomorrowJst.setDate(tomorrowJst.getDate() + 1);
-        const tomorrowStr = `${tomorrowJst.getFullYear()}-${String(tomorrowJst.getMonth()+1).padStart(2,'0')}-${String(tomorrowJst.getDate()).padStart(2,'0')}`;
+        const dateStrs = [];
+        for (let i = 0; i < CHART_DAYS; i++) {
+            const d = new Date(todayJst);
+            d.setDate(d.getDate() + i);
+            dateStrs.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+        }
+        // 3日分 + 翌日00:00のデータを含める
+        const nextDayJst = new Date(todayJst);
+        nextDayJst.setDate(nextDayJst.getDate() + CHART_DAYS);
+        const nextDayStr = `${nextDayJst.getFullYear()}-${String(nextDayJst.getMonth()+1).padStart(2,'0')}-${String(nextDayJst.getDate()).padStart(2,'0')}`;
 
         const todayData = (json.data || []).filter(d =>
-            d.time.startsWith(todayStr) || d.time.startsWith(tomorrowStr + 'T00:00')
+            dateStrs.some(s => d.time.startsWith(s)) || d.time.startsWith(nextDayStr + 'T00:00')
         );
         if (todayData.length === 0) throw new Error('本日の波浪データがありません');
 
@@ -490,13 +566,20 @@ function drawWaveCombinedChart(canvasId, existingInstance, data) {
     const heightData = data.map(d => ({ x: new Date(d.time).getTime(), y: d.wave_height }));
     const periodData = data.map(d => ({ x: new Date(d.time).getTime(), y: d.period }));
 
-    const jstOffsetMs    = 9 * 60 * 60 * 1000;
+    // 潮汐グラフと同じx軸範囲を使用（chartXMin が設定されていない場合は今日の4時から）
+    const jstOffsetMs = 9 * 60 * 60 * 1000;
     const todayJstStartMs = Math.floor((Date.now() + jstOffsetMs) / 86400000) * 86400000 - jstOffsetMs;
-    const xMin = todayJstStartMs +  4 * 60 * 60 * 1000;
-    const xMax = todayJstStartMs + 20 * 60 * 60 * 1000; 
-    const h4ms = 4 * 60 * 60 * 1000;
+    const xMin = chartXMin !== null ? chartXMin : todayJstStartMs + 4 * 60 * 60 * 1000;
+    const xMax = xMin + CHART_DAYS * 24 * 60 * 60 * 1000;
 
-    const ctx   = document.getElementById(canvasId).getContext('2d');
+    setChartContainerWidth('wave-chart-container', CHART_TOTAL_PX);
+
+    const waveXTicks = buildChartXTicks(xMin, xMax);
+
+    const waveCanvas = document.getElementById(canvasId);
+    waveCanvas.width  = CHART_TOTAL_PX;
+    waveCanvas.height = 200;
+    const ctx   = waveCanvas.getContext('2d');
     const chart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -520,16 +603,10 @@ function drawWaveCombinedChart(canvasId, existingInstance, data) {
             ]
         },
         options: {
-            responsive: true, 
+            responsive: false,
             maintainAspectRatio: false,
-            // 【追加】グラフエリア周辺の自動余白を最小化（下部のみ潮汐グラフに合わせる）
             layout: {
-                padding: {
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 24 // 1枚目と同じくらいになるよう微調整
-                }
+                padding: { top: 0, left: 0, right: 0, bottom: 24 }
             },
             interaction: { mode: 'index', intersect: false },
             plugins: {
@@ -541,7 +618,7 @@ function drawWaveCombinedChart(canvasId, existingInstance, data) {
                             const ms = items[0].parsed.x;
                             const h  = (new Date(ms).getUTCHours() + 9) % 24;
                             const m  = new Date(ms).getUTCMinutes();
-                            return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+                            return h + ':' + String(m).padStart(2,'0');
                         },
                         label(ctx) {
                             return ctx.dataset.yAxisID === 'yWave'
@@ -554,14 +631,8 @@ function drawWaveCombinedChart(canvasId, existingInstance, data) {
             scales: {
                 x: {
                     type: 'linear', min: xMin, max: xMax,
-                    ticks: {
-                        stepSize: h4ms, maxRotation: 0,
-                        callback(value) {
-                            const h = (new Date(value).getUTCHours() + 9) % 24;
-                            if (h === 0 || h === 24) return null;
-                            return h + ':00';
-                        }
-                    },
+                    afterBuildTicks(axis) { axis.ticks = waveXTicks; },
+                    ticks: { maxRotation: 0, callback: chartXTickCallback },
                     grid: { display: false }
                 },
 yWave: {
@@ -630,6 +701,9 @@ yWave: {
             周期 [秒]
         </div>
     `;
+
+    syncChartScroll();
+    scrollChartsToNow();
 
     return chart;
 }

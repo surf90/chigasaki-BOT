@@ -78,9 +78,37 @@ def extract_tide_today() -> bool:
     return True
 
 
+def extract_tide_3day() -> bool:
+    """気象庁の年間潮汐JSONから当日・翌日・翌々日のエントリを tide_3day.json に出力する。"""
+    now_jst = datetime.now(JST)
+
+    tide_file = "data/tidedata.json"
+    if not os.path.exists(tide_file):
+        print(f"[tide3day] {tide_file} が見つかりません。スキップします。", file=sys.stderr)
+        return False
+
+    with open(tide_file, encoding="utf-8") as f:
+        all_tides = json.load(f)
+
+    days = []
+    for delta in range(3):
+        d = now_jst + timedelta(days=delta)
+        date_str = d.strftime("%Y-%m-%d")
+        days.append({"date": date_str, "tides": all_tides.get(date_str, [])})
+
+    result = {"generated": now_jst.isoformat(), "days": days}
+
+    with open("data/tide_3day.json", "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False)
+
+    print(f"[tide3day] {days[0]['date']}〜{days[-1]['date']} を保存しました。")
+    return True
+
+
 if __name__ == "__main__":
     ok_moon = extract_moon_today()
     ok_tide = extract_tide_today()
+    extract_tide_3day()
 
     if not ok_moon or not ok_tide:
         sys.exit(1)
