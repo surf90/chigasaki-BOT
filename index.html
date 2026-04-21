@@ -137,7 +137,7 @@ lang: ja
                 <div class="data-row"><span>満潮・干潮: </span> <span id="tide-status">読み込み中...</span></div>
             </div>
 
-            <div id="tide-chart-scroll" style="overflow-x:scroll;-webkit-overflow-scrolling:touch;margin-top:20px;">
+            <div id="tide-chart-scroll" style="overflow-x:scroll;overflow-y:hidden;-webkit-overflow-scrolling:touch;margin-top:20px;">
                 <div id="tide-chart-container" style="display:none;height:160px;">
                     <canvas id="tideChart"></canvas>
                 </div>
@@ -150,7 +150,7 @@ lang: ja
             <h2>🌊 波情報 <span style="font-size:11px; font-weight:400; color:#707070; letter-spacing:-0.28px;">（気象庁）</span></h2>
             <div id="wave-guid-loading" style="color:#707070; font-size:14px;">取得中...</div>
             <div id="wave-guid-content" style="display:none;">
-                <div id="wave-chart-scroll" style="overflow-x:scroll;-webkit-overflow-scrolling:touch;">
+                <div id="wave-chart-scroll" style="overflow-x:scroll;overflow-y:hidden;-webkit-overflow-scrolling:touch;">
                     <div id="wave-chart-container" style="height:200px;margin-top:12px;">
                         <canvas id="waveChart"></canvas>
                     </div>
