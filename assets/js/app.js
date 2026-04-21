@@ -270,10 +270,15 @@ function buildChartXTicks(xMin, xMax) {
 }
 
 function chartXTickCallback(value, index) {
-    const jstH = (new Date(value).getUTCHours() + 9) % 24;
-    const jstM = new Date(value).getUTCMinutes();
-    if (index === 0) return jstM === 0 ? jstH + ':00' : jstH + ':' + String(jstM).padStart(2, '0');
-    return jstH + ':00';
+    const d = new Date(value + 9 * 60 * 60 * 1000); // JST
+    const jstH = d.getUTCHours();
+    const jstM = d.getUTCMinutes();
+    const timeStr = jstM === 0 ? jstH + ':00' : jstH + ':' + String(jstM).padStart(2, '0');
+    // 翌日0:00に日付を付加
+    if (jstH === 0 && jstM === 0 && index > 0) {
+        return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + ' ' + timeStr;
+    }
+    return timeStr;
 }
 
 function setChartContainerWidth(containerId, px) {
