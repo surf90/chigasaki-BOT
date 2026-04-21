@@ -1,10 +1,6 @@
 """
-GitHub Actionsから毎日 JST 0:10 に実行し、
+GitHub Actionsから毎日 JST 0:05 に実行し、
 当日分の月齢・潮汐データを小さなJSONとして出力するスクリプト。
-
-出力:
-  data/moon_today.json  - 本日の月齢・月相（数十バイト）
-  data/tide_today.json  - 本日の満潮・干潮一覧（数百バイト）
 """
 
 import json
@@ -14,25 +10,31 @@ from datetime import datetime, timezone, timedelta
 
 JST = timezone(timedelta(hours=9))
 
+def load_json(filepath: str) -> dict | list | None:
+    """JSONファイルを安全に読み込むヘルパー関数"""
+    if not os.path.exists(filepath):
+        print(f"[error] {filepath} が見つかりません。", file=sys.stderr)
+        return None
+    try:
+        with open(filepath, encoding="utf-8") as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"[error] {filepath} の読み込みに失敗しました: {e}", file=sys.stderr)
+        return None
 
 def extract_moon_today() -> bool:
     """NASA SVSの年間JSONから当日JST正午の月齢エントリを抽出する。"""
     now_jst = datetime.now(JST)
     year = now_jst.year
-
     moon_file = f"data/mooninfo_{year}.json"
-    if not os.path.exists(moon_file):
-        print(f"[moon] {moon_file} が見つかりません。スキップします。", file=sys.stderr)
+
+    moon_data = load_json(moon_file)
+    if moon_data is None:
         return False
 
-    # JST正午 = UTC 03:00 を基準にすることで、その日の代表値として安定する
-    target_utc = datetime(now_jst.year, now_jst.month, now_jst.day, 3, 0, 0,
-                          tzinfo=timezone.utc)
+    target_utc = datetime(now_jst.year, now_jst.month, now_jst.day, 3, 0, 0, tzinfo=timezone.utc)
     year_start = datetime(year, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     hour_index = int((target_utc - year_start).total_seconds() / 3600)
-
-    with open(moon_file, encoding="utf-8") as f:
-        moon_data = json.load(f)
 
     if hour_index < 0 or hour_index >= len(moon_data):
         print(f"[moon] hourIndex={hour_index} が範囲外です。", file=sys.stderr)
@@ -45,70 +47,63 @@ def extract_moon_today() -> bool:
         "phase": round(entry["phase"], 1),
     }
 
+    os.makedirs("data", exist_ok=True) # ディレクトリ確保
     with open("data/moon_today.json", "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False)
 
     print(f"[moon] {result['date']} age={result['age']} phase={result['phase']}")
     return True
 
-
-def extract_tide_today() -> bool:
+# 変更点: 引数として all_tides (読み込み済みのデータ) を受け取るようにした
+def extract_tide_today(all_tides: dict) -> bool:
     """気象庁の年間潮汐JSONから当日のエントリを抽出する。"""
-    now_jst = datetime.now(JST)
-    date_str = now_jst.strftime("%Y-%m-%d")
-
-    tide_file = "data/tidedata.json"
-    if not os.path.exists(tide_file):
-        print(f"[tide] {tide_file} が見つかりません。スキップします。", file=sys.stderr)
-        return False
-
-    with open(tide_file, encoding="utf-8") as f:
-        all_tides = json.load(f)
-
+    date_str = datetime.now(JST).strftime("%Y-%m-%d")
     today_tides = all_tides.get(date_str, [])
+    
     result = {
         "date": date_str,
         "tides": today_tides,
     }
 
+    os.makedirs("data", exist_ok=True)
     with open("data/tide_today.json", "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False)
 
     print(f"[tide] {date_str} {len(today_tides)} エントリを保存しました。")
     return True
 
-
-def extract_tide_2day() -> bool:
-    """気象庁の年間潮汐JSONから当日・翌日のエントリを tide_2day.json に出力する。"""
+# 変更点: 引数として all_tides を受け取るようにした
+def extract_tide_3day(all_tides: dict) -> bool:
+    """気象庁の年間潮汐JSONから本日〜翌々日のエントリを出力する。"""
     now_jst = datetime.now(JST)
-
-    tide_file = "data/tidedata.json"
-    if not os.path.exists(tide_file):
-        print(f"[tide2day] {tide_file} が見つかりません。スキップします。", file=sys.stderr)
-        return False
-
-    with open(tide_file, encoding="utf-8") as f:
-        all_tides = json.load(f)
-
     days = []
-    for delta in range(2):
+
+    for delta in range(3):
         d = now_jst + timedelta(days=delta)
         date_str = d.strftime("%Y-%m-%d")
         days.append({"date": date_str, "tides": all_tides.get(date_str, [])})
 
     result = {"generated": now_jst.isoformat(), "days": days}
 
-    with open("data/tide_2day.json", "w", encoding="utf-8") as f:
+    os.makedirs("data", exist_ok=True)
+    with open("data/tide_3day.json", "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False)
 
-    print(f"[tide2day] {days[0]['date']}〜{days[-1]['date']} を保存しました。")
+    print(f"[tide3day] {days[0]['date']}〜{days[-1]['date']} を保存しました。")
     return True
-
 
 if __name__ == "__main__":
     ok_moon = extract_moon_today()
-    ok_tide = extract_tide_today()
-    extract_tide_2day()
+    
+    # 潮汐データはここで1回だけ読み込み、各関数に使い回す
+    tide_data = load_json("data/tidedata.json")
+    
+    if tide_data is not None:
+        ok_tide_today = extract_tide_today(tide_data)
+        ok_tide_3day = extract_tide_3day(tide_data)
+        ok_tide = ok_tide_today and ok_tide_3day
+    else:
+        ok_tide = False
 
     if not ok_moon or not ok_tide:
         sys.exit(1)
