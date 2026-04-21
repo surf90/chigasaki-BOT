@@ -147,9 +147,9 @@ async function fetchTideExtremes() {
     const now = new Date();
     const dayKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 
-    // STEP 1: 2日分JSON（tide_2day.json）を優先
+// STEP 1: 3日分JSON（tide_3day.json）を優先
     try {
-        const res = await fetch(`data/tide_2day.json?d=${dayKey}`);
+        const res = await fetch(`data/tide_3day.json?d=${dayKey}`);
         if (res.ok) {
             const data2 = await res.json();
             if (data2.days && data2.days.length > 0 && data2.days[0].date === dayKey) {
