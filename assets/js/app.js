@@ -130,22 +130,23 @@ async function fetchTideExtremes() {
     const now = new Date();
     const dayKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 
-    // STEP 1: 3日分JSON（tide_3day.json）を優先
+    // STEP 1: 2日分JSON（tide_2day.json）を優先
     try {
-        const res = await fetch(`data/tide_3day.json?d=${dayKey}`);
+        const res = await fetch(`data/tide_2day.json?d=${dayKey}`);
         if (res.ok) {
-            const data3 = await res.json();
-            if (data3.days && data3.days.length > 0 && data3.days[0].date === dayKey) {
-                const all = data3.days.flatMap(d => d.tides);
-                if (all.length > 0) {
-                    displayTideData(all);
+            const data2 = await res.json();
+            if (data2.days && data2.days.length > 0 && data2.days[0].date === dayKey) {
+                const todayTides = data2.days[0].tides;
+                const allTides   = data2.days.flatMap(d => d.tides);
+                if (allTides.length > 0) {
+                    displayTideData(todayTides, allTides);
                     updateTideSource("気象庁");
                     return;
                 }
             }
         }
     } catch (e) {
-        console.warn("tide_3day.json 取得失敗 -> tide_today.jsonへフォールバック");
+        console.warn("tide_2day.json 取得失敗 -> tide_today.jsonへフォールバック");
     }
 
     // STEP 1b: 当日JSONにフォールバック
@@ -154,7 +155,7 @@ async function fetchTideExtremes() {
         if (res.ok) {
             const todayData = await res.json();
             if (todayData.date === dayKey && todayData.tides && todayData.tides.length > 0) {
-                displayTideData(todayData.tides);
+                displayTideData(todayData.tides, todayData.tides);
                 updateTideSource("気象庁");
                 return;
             }
@@ -170,7 +171,7 @@ async function fetchTideExtremes() {
         if (!res.ok) throw new Error();
         const sgData = await res.json();
         if (sgData && sgData.data) {
-            displayTideData(sgData.data);
+            displayTideData(sgData.data, sgData.data);
             updateTideSource("Stormglass");
             return;
         }
@@ -195,7 +196,8 @@ function updateTideSource(sourceName) {
 
 let tideChartInstance = null;
 
-function displayTideData(extremes) {
+// extremes: 当日のみ（テキスト表示用）、chartExtremes: 複数日（グラフ用）
+function displayTideData(extremes, chartExtremes) {
     const container = document.getElementById('tide-extremes-container');
     container.innerHTML = '';
 
@@ -204,24 +206,16 @@ function displayTideData(extremes) {
         return;
     }
 
-    const chartDataPoints = [];
-    let hasHeightData = false;
-    const highTides = [];
-    const lowTides  = [];
-
+    // テキスト表示（当日のみ）
+    const highTides = [], lowTides = [];
     extremes.forEach(item => {
         const dateObj  = new Date(item.time);
         const timeStr  = dateObj.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-        let heightValue = item.type === 'high' ? 1 : 0;
-        let heightText  = '';
+        let heightText = '';
         if (item.height !== undefined && item.height !== null) {
-            hasHeightData = true;
-            heightValue = parseFloat(item.height);
-            heightText = ` <span style="color:#888888;font-weight:normal;font-size:0.85em;">(${heightValue.toFixed(1)} m)</span>`;
+            heightText = ` <span style="color:#888888;font-weight:normal;font-size:0.85em;">(${parseFloat(item.height).toFixed(1)} m)</span>`;
         }
-        const formattedTime = `${timeStr}${heightText}`;
-        (item.type === 'high' ? highTides : lowTides).push(formattedTime);
-        chartDataPoints.push({ timeMs: dateObj.getTime(), timeStr, type: item.type, height: heightValue });
+        (item.type === 'high' ? highTides : lowTides).push(`${timeStr}${heightText}`);
     });
 
     const sep = '<span style="color:#888888;font-weight:normal;"> , </span>';
@@ -238,12 +232,26 @@ function displayTideData(extremes) {
         container.appendChild(row);
     }
 
+    // グラフ描画（複数日分）
+    const chartData = (chartExtremes || extremes);
+    const chartDataPoints = [];
+    let hasHeightData = false;
+    chartData.forEach(item => {
+        const dateObj   = new Date(item.time);
+        const timeStr   = dateObj.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        let heightValue = item.type === 'high' ? 1 : 0;
+        if (item.height !== undefined && item.height !== null) {
+            hasHeightData = true;
+            heightValue   = parseFloat(item.height);
+        }
+        chartDataPoints.push({ timeMs: dateObj.getTime(), timeStr, type: item.type, height: heightValue });
+    });
     drawTideChart(chartDataPoints, hasHeightData);
 }
 
 // 両グラフで共有するx軸範囲と幅
 let chartXMin = null;
-const CHART_DAYS = 3;
+const CHART_DAYS = 2;
 const PX_PER_HOUR = 40;
 const CHART_TOTAL_PX = PX_PER_HOUR * 24 * CHART_DAYS;
 let chartScrollSynced = false;
@@ -728,12 +736,13 @@ async function fetchWeatherData() {
     }
     try {
         await calculateTide();
+        // 潮汐を先に完了させ chartXMin を確定してから波グラフを描画
         await Promise.allSettled([
             fetchTideExtremes(),
             fetchJmaForecast(),
             fetchJmaWarning(),
-            fetchWaveGuidance(),
         ]);
+        await fetchWaveGuidance();
 
         // Open-Meteo はセッション内30分キャッシュ
         const [weatherResult, marineResult] = await Promise.allSettled([
