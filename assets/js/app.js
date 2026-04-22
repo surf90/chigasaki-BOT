@@ -269,7 +269,7 @@ function displayTideData(extremes, chartExtremes) {
 // 両グラフで共有するx軸範囲と幅
 let chartXMin = null;
 const CHART_DAYS = 2;
-const PX_PER_HOUR = 28;
+const PX_PER_HOUR = 14;
 const CHART_TOTAL_PX = PX_PER_HOUR * 24 * CHART_DAYS;
 let chartScrollSynced = false;
 
