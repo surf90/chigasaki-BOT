@@ -422,6 +422,7 @@ function drawTideChart(extremes, hasHeightData) {
                     // 👇ここを追加（Y軸の幅を固定）
                     afterFit: function(scale) {
                         scale.width = 55; // 波グラフと同じ値に設定します（必要に応じて数値を調整してください）
+                    }
                 },
                 x: {
                     type: 'linear', min: chartXMin, max: xMax,
