@@ -418,10 +418,10 @@ function drawTideChart(extremes, hasHeightData) {
                     display: hasHeightData,
                     suggestedMin: hasHeightData ? Math.min(...dataPoints.map(d => d.y)) - 0.2 : -0.2,
                     suggestedMax: hasHeightData ? Math.max(...dataPoints.map(d => d.y)) + 0.2 :  1.2,
-                    ticks: { callback: v => v.toFixed(1) + ' m' }
+                    ticks: { callback: v => v.toFixed(1) + ' m' },
                     // 👇ここを追加（Y軸の幅を固定）
                     afterFit: function(scale) {
-                        scale.width = 55; // 波グラフと同じ値に設定します（必要に応じて数値を調整してください）
+                      scale.width = 55; // 波グラフと同じ値に設定します（必要に応じて数値を調整してください）
                     }
                 },
                 x: {
@@ -683,9 +683,10 @@ yWave: {
                         color: 'rgba(0,0,0,0.05)',
                         drawTicks: false, // 【追加】目盛り線を非表示にする
                         tickLength: 0     // 【追加】念のため長さを0に
-                    }
+                    },
                     afterFit: function(scale) {
                         scale.width = 55; // 潮汐グラフと同じ値に設定します
+                    }
                 },
                 yPeriod: {
                     type: 'linear', position: 'right',
