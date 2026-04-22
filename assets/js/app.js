@@ -207,8 +207,8 @@ async function fetchTideExtremes() {
 }
 
 function updateTideSource(sourceName) {
-    const titleSpan = document.querySelector('#tide-info-box h2 span');
-    if (titleSpan) titleSpan.textContent = `（${sourceName}）`;
+    const el = document.getElementById('tide-source-label');
+    if (el) el.textContent = sourceName;
 }
 
 let tideChartInstance = null;

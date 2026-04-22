@@ -83,7 +83,10 @@ h1 small {
     font-weight: 600;
     opacity: 0.9;
     letter-spacing: 0.02em;
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
     margin-bottom: 4px;
 }
 .hero-value-group {
@@ -158,6 +161,37 @@ h1 small {
     margin-bottom: 12px;
     color: #222222;
     letter-spacing: -0.28px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.section-icon {
+    color: #0e7490;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+.section-label {
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #0e7490;
+    background: rgba(14,116,144,0.08);
+    border: 1px solid rgba(14,116,144,0.2);
+    border-radius: 4px;
+    padding: 1px 6px;
+    line-height: 1.6;
+    flex-shrink: 0;
+}
+.section-source {
+    font-size: 10px;
+    font-weight: 400;
+    color: #aaaaaa;
+    letter-spacing: -0.2px;
+    margin-left: auto;
+    flex-shrink: 0;
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
 }
 .data-row {
     display: flex;
