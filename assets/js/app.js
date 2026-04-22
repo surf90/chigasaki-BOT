@@ -683,6 +683,8 @@ yWave: {
                         drawTicks: false, // 【追加】目盛り線を非表示にする
                         tickLength: 0     // 【追加】念のため長さを0に
                     }
+                    afterFit: function(scale) {
+                        scale.width = 55; // 潮汐グラフと同じ値に設定します
                 },
                 yPeriod: {
                     type: 'linear', position: 'right',
