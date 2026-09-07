@@ -1,14 +1,10 @@
 {
-  "reportDateTime": "2026/09/08 06:10",
-  "fetchedAt": "2026-09-08T06:16:59+09:00",
+  "reportDateTime": "2026/09/08 08:30",
+  "fetchedAt": "2026-09-08T08:40:17+09:00",
   "source": "https://www.data.jma.go.jp/multi/data/VPWS50/JPTF_jp.json",
   "area": "茅ヶ崎市",
   "areaCode": "1420700",
   "warnings": [
-    {
-      "code": "29",
-      "name": "レベル２土砂災害注意報"
-    },
     {
       "code": "14",
       "name": "雷注意報"
