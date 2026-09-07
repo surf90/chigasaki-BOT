@@ -1,6 +1,6 @@
 {
-  "reportDateTime": "2026/09/07 20:50",
-  "fetchedAt": "2026-09-07T20:56:18+09:00",
+  "reportDateTime": "2026/09/08 02:30",
+  "fetchedAt": "2026-09-08T02:38:14+09:00",
   "source": "https://www.data.jma.go.jp/multi/data/VPWS50/JPTF_jp.json",
   "area": "茅ヶ崎市",
   "areaCode": "1420700",
@@ -12,10 +12,6 @@
     {
       "code": "14",
       "name": "雷注意報"
-    },
-    {
-      "code": "16",
-      "name": "波浪注意報"
     }
   ]
 }
